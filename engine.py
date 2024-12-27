@@ -80,17 +80,17 @@ def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
         print(f"Erro ao criar documento Word: {e}")
         print(traceback.format_exc())
 
+        
 def process_text(texto):
     """Processa o texto e retorna JSON estruturado com tratamento de erros aprimorado."""
-    chave_api = os.environ.get('OPENAI_API_KEY')
+    chave_api = os.getenv('OPENAI_API_KEY')
     
     if not chave_api:
         raise ValueError("Chave de API OpenAI não encontrada. Defina OPENAI_API_KEY no arquivo .env.")
 
-    # Prompt ajustado para clareza e formato
     modelo_prompt = f"""
     Você é um especialista em extração de informações estruturadas de currículos.
-    Analise o texto do currículo abaixo e gere um JSON estruturado com as seguintes informações:
+    Analise o texto do currículo abaixo e gere apenas o JSON estruturado com as seguintes informações:
     
     - Informações pessoais: nome, cidade, email, telefone, cargo.
     - Resumo de qualificações.
@@ -101,7 +101,7 @@ def process_text(texto):
     TEXTO DO CURRÍCULO:
     {texto}
     
-    O JSON gerado deve seguir esta estrutura:
+    Responda somente com o JSON no seguinte formato:
     {{
         "informacoes_pessoais": {{
             "nome": "Nome Completo",
@@ -139,8 +139,14 @@ def process_text(texto):
         print("Resposta da API OpenAI:")
         print(resultado.content)  # Exibe a resposta completa da API
 
+        # Extraindo apenas o JSON da resposta
         try:
-            dados_json = json.loads(resultado.content)  # Tenta converter a resposta para JSON
+            match = re.search(r'\{.*\}', resultado.content, re.DOTALL)
+            if match:
+                dados_json = json.loads(match.group(0))  # Tenta converter a parte do JSON
+                return dados_json
+            else:
+                raise ValueError("JSON não encontrado na resposta da API.")
         except json.JSONDecodeError as e:
             print(f"Erro ao decodificar JSON: {e}. Conteúdo da resposta:\n{resultado.content}")
             return {
@@ -151,16 +157,6 @@ def process_text(texto):
                 "certificacoes": []
             }
 
-        # Verificação final e fallback para estrutura padrão
-        estrutura_padrao = {
-            "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
-            "resumo_qualificacoes": [],
-            "experiencia_profissional": [],
-            "educacao": [],
-            "certificacoes": []
-        }
-        return resultado.content #validate_json(resultado.content, estrutura_padrao)
-
     except Exception as e:
         print("Erro ao processar texto com a API OpenAI:", e)
         return {
@@ -170,6 +166,7 @@ def process_text(texto):
             "educacao": [],
             "certificacoes": []
         }
+
 
 def extract_text_from_pdf(caminho_pdf):
     """Extrai o texto de um arquivo PDF."""

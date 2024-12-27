@@ -112,8 +112,12 @@ def main():
                 status_text.text("Etapa 2: Processando o texto do currículo...")
                 progress_bar.progress(50)
                 json_data = process_text(pdf_text)
-                st.write("**Texto extraído do PDF:", pdf_text)
+                st.write("Texto extraído do PDF:", pdf_text)
                 st.write("JSON gerado pela API:", json_data)
+
+                if not json_data or not json_data.get("informacoes_pessoais", {}).get("nome"):
+                    st.error("O JSON gerado está vazio ou incompleto. Verifique o arquivo enviado.")
+                    return
 
                 # Salvar JSON temporariamente
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".json", mode='w', encoding='utf-8') as temp_json:
