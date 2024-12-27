@@ -6,7 +6,15 @@ import base64
 import tempfile
 from pathlib import Path
 from engine import extract_text_from_pdf, process_text, create_docx_from_json
+from dotenv import load_dotenv
 
+
+load_dotenv()
+chave_api = os.environ.get('OPENAI_API_KEY')
+    
+if not chave_api:
+    st.write("Chave de API OpenAI não encontrada. Defina OPENAI_API_KEY no arquivo .env.")
+    
 # Função para adicionar uma imagem de fundo a partir de um arquivo local
 def add_bg_from_local(image_file):
     with Path(image_file).open("rb") as file:
