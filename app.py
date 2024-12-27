@@ -103,7 +103,6 @@ def main():
                 status_text.text("Etapa 1: Extraindo texto do PDF...")
                 progress_bar.progress(20)
                 pdf_text = extract_text_from_pdf(temp_pdf_path)
-                st.write("Texto extraído do PDF:", pdf_text)
                 
                 if not pdf_text.strip():
                     st.error("Não foi possível extrair texto do PDF. Verifique o arquivo e tente novamente.")
@@ -113,6 +112,7 @@ def main():
                 status_text.text("Etapa 2: Processando o texto do currículo...")
                 progress_bar.progress(50)
                 json_data = process_text(pdf_text)
+                st.write("**Texto extraído do PDF:", pdf_text)
                 st.write("JSON gerado pela API:", json_data)
 
                 # Salvar JSON temporariamente
