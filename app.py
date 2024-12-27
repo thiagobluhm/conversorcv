@@ -5,7 +5,7 @@ import traceback
 import base64
 import tempfile
 from pathlib import Path
-from engine import extract_text_from_pdf, create_docx_from_json
+from engine import extract_text_from_pdf, process_text, create_docx_from_json
 
 # Função para adicionar uma imagem de fundo a partir de um arquivo local
 def add_bg_from_local(image_file):

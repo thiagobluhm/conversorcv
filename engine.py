@@ -10,7 +10,6 @@ from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.shared import RGBColor
-import tempfile
 
 # Carregar variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -74,40 +73,69 @@ def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
         paragrafo_contato = doc.add_paragraph(contato)
         paragrafo_contato.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
 
-        # Formação
-        adicionar_espaco()
-        paragrafo_formacao = doc.add_paragraph('Formação:')
-        if paragrafo_formacao.runs:
-            paragrafo_formacao.runs[0].bold = True
-            paragrafo_formacao.runs[0].font.size = Pt(12)
-
-        educacao = dados.get('educacao', [])
-        for item in educacao:
-            instituicao = item.get('instituicao', 'Instituição Não Especificada')
-            grau = item.get('grau', 'Grau Não Especificado')
-            ano_formatura = item.get('ano_formatura', 'Ano Não Especificado')
-            paragrafo_educacao = doc.add_paragraph(f' • {grau}, {instituicao} - finalizado em {ano_formatura}')
-            paragrafo_educacao.paragraph_format.left_indent = Pt(18)
-
-        # Certificações
-        adicionar_espaco()
-        paragrafo_certificacoes = doc.add_paragraph('Certificações:')
-        if paragrafo_certificacoes.runs:
-            paragrafo_certificacoes.runs[0].bold = True
-            paragrafo_certificacoes.runs[0].font.size = Pt(12)
-
-        certificacoes = dados.get('certificacoes', [])
-        for item in certificacoes:
-            certificado = item.get('certificado', 'Certificado Não Especificado')
-            paragrafo_certificacao = doc.add_paragraph(f' • {certificado}')
-            paragrafo_certificacao.paragraph_format.left_indent = Pt(18)
-
         # Salvar o documento
         doc.save(arquivo_saida)
         print(f"Currículo salvo em {arquivo_saida}")
     except Exception as e:
         print(f"Erro ao criar documento Word: {e}")
         print(traceback.format_exc())
+
+def process_text(texto):
+    """Processa o texto e retorna JSON estruturado com tratamento de erros aprimorado."""
+    chave_api = os.getenv('OPENAI_API_KEY')
+    
+    if not chave_api:
+        raise ValueError("Chave de API OpenAI não encontrada. Defina OPENAI_API_KEY no arquivo .env.")
+
+    modelo_prompt = """
+    Você é um especialista em extração de informações estruturadas de currículos. 
+    Analise cuidadosamente o texto completo do CV e extraia os detalhes em um formato JSON estruturado e preciso. 
+    Priorize a clareza e a completude.
+
+    TEXTO DO CV:
+    {texto}
+    
+    INSTRUÇÕES PARA O OUTPUT:
+    - Retorne um JSON completo com todos os campos esperados
+    - Use um texto descritivo e conciso
+    - Se faltar alguma informação, use strings ou listas vazias
+    - Garanta formatação e legibilidade adequadas
+
+    ESTRUTURA DE JSON EXIGIDA:
+    {{"informacoes_pessoais": {{"nome": "Nome Completo","cidade": "Cidade, Estado/País","bairro": "Bairro Opcional","email": "email@exemplo.com","telefone": "Telefone Opcional","cargo": "Cargo Atual ou Desejado"}},
+    "resumo_qualificacoes": [],
+    "experiencia_profissional": [],
+    "educacao": [],
+    "certificacoes": []}}
+    """
+    
+    try:
+        prompt = PromptTemplate(template=modelo_prompt, input_variables=["texto"])
+        llm = ChatOpenAI(api_key=chave_api, temperature=0, model="gpt-4")
+        resultado = llm.invoke(prompt.format(texto=texto))
+        
+        print("Resposta Completa do Modelo:")
+        print(resultado.content)
+        
+        dados_json = json.loads(resultado.content)
+        return validate_json(dados_json, {
+            "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
+            "resumo_qualificacoes": [],
+            "experiencia_profissional": [],
+            "educacao": [],
+            "certificacoes": []
+        })
+    
+    except Exception as e:
+        print("Erro detalhado ao processar texto:")
+        print(traceback.format_exc())
+        return {
+            "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
+            "resumo_qualificacoes": [],
+            "experiencia_profissional": [],
+            "educacao": [],
+            "certificacoes": []
+        }
 
 def extract_text_from_pdf(caminho_pdf):
     """Extrai o texto de um arquivo PDF."""
