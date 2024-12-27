@@ -159,7 +159,7 @@ def process_text(texto):
             "educacao": [],
             "certificacoes": []
         }
-        return validate_json(dados_json, estrutura_padrao)
+        return validate_json(resultado.content, estrutura_padrao)
 
     except Exception as e:
         print("Erro ao processar texto com a API OpenAI:", e)
