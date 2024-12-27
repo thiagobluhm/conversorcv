@@ -10,3 +10,4 @@ exports/
 
 # Ignore log files
 *.log
+teste.py

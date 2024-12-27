@@ -82,13 +82,13 @@ def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
 
 def process_text(texto):
     """Processa o texto e retorna JSON estruturado com tratamento de erros aprimorado."""
-    chave_api = os.getenv('OPENAI_API_KEY')
+    chave_api = os.environ.get('OPENAI_API_KEY')
     
     if not chave_api:
         raise ValueError("Chave de API OpenAI não encontrada. Defina OPENAI_API_KEY no arquivo .env.")
 
     # Prompt ajustado para clareza e formato
-    modelo_prompt = """
+    modelo_prompt = f"""
     Você é um especialista em extração de informações estruturadas de currículos.
     Analise o texto do currículo abaixo e gere um JSON estruturado com as seguintes informações:
     
