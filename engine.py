@@ -80,75 +80,60 @@ def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
         print(f"Erro ao criar documento Word: {e}")
         print(traceback.format_exc())
 
-        
+
 def process_text(texto):
     """Processa o texto e retorna JSON estruturado com tratamento de erros aprimorado."""
     chave_api = os.getenv('OPENAI_API_KEY')
-    
     if not chave_api:
-        raise ValueError("Chave de API OpenAI não encontrada. Defina OPENAI_API_KEY no arquivo .env.")
+        raise ValueError("Chave da API OpenAI não encontrada. Certifique-se de que a variável está configurada corretamente.")
 
+    # Prompt atualizado para maior clareza e contexto
     modelo_prompt = f"""
-    Você é um especialista em extração de informações estruturadas de currículos.
-    Analise o texto do currículo abaixo e gere apenas o JSON estruturado com as seguintes informações:
-    
-    - Informações pessoais: nome, cidade, email, telefone, cargo.
+    Você é um especialista em extração de informações de currículos. Analise o texto abaixo e produza um JSON estruturado com:
+    - Informações pessoais (nome, cidade, email, telefone, cargo desejado).
     - Resumo de qualificações.
     - Experiência profissional (empresa, cargo, período, atividades, projetos).
-    - Formação acadêmica (instituição, grau, ano de formatura).
+    - Formação acadêmica (instituição, grau, ano de conclusão).
     - Certificações.
-    
+
     TEXTO DO CURRÍCULO:
     {texto}
-    
-    Responda somente com o JSON no seguinte formato:
+
+    Formato esperado:
     {{
         "informacoes_pessoais": {{
-            "nome": "Nome Completo",
-            "cidade": "Cidade, Estado/País",
-            "email": "email@exemplo.com",
-            "telefone": "Número de telefone",
-            "cargo": "Cargo Atual ou Desejado"
+            "nome": "",
+            "cidade": "",
+            "email": "",
+            "telefone": "",
+            "cargo": ""
         }},
-        "resumo_qualificacoes": ["Resumo das principais habilidades e conquistas"],
-        "experiencia_profissional": [
-            {{
-                "empresa": "Nome da Empresa",
-                "cargo": "Título do Cargo",
-                "periodo": "Data de Início - Data de Término",
-                "atividades": ["Descrição das atividades desempenhadas"],
-                "projetos": ["Descrição dos projetos relevantes"]
-            }}
-        ],
-        "educacao": [
-            {{
-                "instituicao": "Nome da Instituição",
-                "grau": "Grau Obtido",
-                "ano_formatura": "Ano de Formatura"
-            }}
-        ],
-        "certificacoes": ["Nome das Certificações"]
+        "resumo_qualificacoes": [],
+        "experiencia_profissional": [],
+        "educacao": [],
+        "certificacoes": []
     }}
     """
 
     try:
-        print(f"Texto enviado à API:\n{texto[:500]}...\n")  # Log do texto enviado       
+        # Log do texto enviado
+        print(f"Texto enviado para API (primeiros 500 caracteres): {texto[:500]}")
+
+        # Comunicação com a API
         llm = ChatOpenAI(api_key=chave_api, temperature=0, model="gpt-4")
         resultado = llm.invoke(modelo_prompt)
-        
-        print("Resposta da API OpenAI:")
-        print(resultado.content)  # Exibe a resposta completa da API
 
-        # Extraindo apenas o JSON da resposta
+        # Log da resposta da API
+        print("Resposta da API OpenAI:", resultado.content)
+
         try:
-            match = re.search(r'\{.*\}', resultado.content, re.DOTALL)
-            if match:
-                dados_json = json.loads(match.group(0))  # Tenta converter a parte do JSON
-                return dados_json
-            else:
-                raise ValueError("JSON não encontrado na resposta da API.")
+            # Tenta converter a resposta em JSON
+            dados_json = json.loads(resultado.content)
+            return dados_json
         except json.JSONDecodeError as e:
-            print(f"Erro ao decodificar JSON: {e}. Conteúdo da resposta:\n{resultado.content}")
+            print(f"Erro ao decodificar JSON: {e}")
+            print("Resposta recebida (não JSON):", resultado.content)
+            # Retorna uma estrutura padrão caso o JSON seja inválido
             return {
                 "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
                 "resumo_qualificacoes": [],
@@ -158,7 +143,8 @@ def process_text(texto):
             }
 
     except Exception as e:
-        print("Erro ao processar texto com a API OpenAI:", e)
+        print(f"Erro ao processar texto com a API OpenAI: {e}")
+        # Retorna uma estrutura padrão em caso de erro geral
         return {
             "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
             "resumo_qualificacoes": [],
@@ -166,6 +152,7 @@ def process_text(texto):
             "educacao": [],
             "certificacoes": []
         }
+
 
 
 def extract_text_from_pdf(caminho_pdf):
