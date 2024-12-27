@@ -88,32 +88,60 @@ def process_text(texto):
         raise ValueError("Chave de API OpenAI não encontrada. Defina OPENAI_API_KEY no arquivo .env.")
 
     modelo_prompt = """
-    Você é um especialista em extração de informações estruturadas de currículos. 
-    Analise cuidadosamente o texto completo do CV e extraia os detalhes em um formato JSON estruturado e preciso. 
-    Priorize a clareza e a completude.
-
-    TEXTO DO CV:
+    Você é um especialista em extração de informações estruturadas de currículos.
+    Analise o texto do currículo abaixo e gere um JSON estruturado com as seguintes informações:
+    - Informações pessoais: nome, cidade, email, telefone, cargo.
+    - Resumo de qualificações.
+    - Experiência profissional (empresa, cargo, período, atividades, projetos).
+    - Formação acadêmica (instituição, grau, ano de formatura).
+    - Certificações.
+    
+    TEXTO DO CURRÍCULO:
     {texto}
     
-    INSTRUÇÕES PARA O OUTPUT:
-    - Retorne um JSON completo com todos os campos esperados
-    - Use um texto descritivo e conciso
-    - Se faltar alguma informação, use strings ou listas vazias
-    - Garanta formatação e legibilidade adequadas
+    ESTRUTURA ESPERADA DO JSON:
+    {{
+        "informacoes_pessoais": {{
+            "nome": "Nome Completo",
+            "cidade": "Cidade, Estado/País",
+            "email": "email@exemplo.com",
+            "telefone": "Número de telefone",
+            "cargo": "Cargo Atual ou Desejado"
+        }},
+        "resumo_qualificacoes": ["Resumo das principais habilidades e conquistas"],
+        "experiencia_profissional": [
+            {{
+                "empresa": "Nome da Empresa",
+                "cargo": "Título do Cargo",
+                "periodo": "Data de Início - Data de Término",
+                "atividades": ["Descrição das atividades desempenhadas"],
+                "projetos": ["Descrição dos projetos relevantes"]
+            }}
+        ],
+        "educacao": [
+            {{
+                "instituicao": "Nome da Instituição",
+                "grau": "Grau Obtido",
+                "ano_formatura": "Ano de Formatura"
+            }}
+        ],
+        "certificacoes": ["Nome das Certificações"]
+    }}
     """
-    
+
     try:
+        print(f"Texto enviado à API:\n{texto[:500]}...\n")  # Log do texto enviado
         prompt = PromptTemplate(template=modelo_prompt, input_variables=["texto"])
         llm = ChatOpenAI(api_key=chave_api, temperature=0, model="gpt-4")
         resultado = llm.invoke(prompt.format(texto=texto))
         
         print("Resposta da API OpenAI:")
-        print(resultado.content)
+        print(resultado.content)  # Exibe a resposta completa da API
 
         try:
-            dados_json = json.loads(resultado.content)
-        except json.JSONDecodeError as e:
-            print("Erro ao decodificar JSON:", e)
+            dados_json = json.loads(resultado.content)  # Tenta converter a resposta para JSON
+        except json.JSONDecodeError:
+            print("Erro ao decodificar JSON. Verificando resposta da API.")
             return {
                 "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
                 "resumo_qualificacoes": [],
@@ -122,8 +150,16 @@ def process_text(texto):
                 "certificacoes": []
             }
 
-        return dados_json
-    
+        # Verificação final e fallback para estrutura padrão
+        estrutura_padrao = {
+            "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
+            "resumo_qualificacoes": [],
+            "experiencia_profissional": [],
+            "educacao": [],
+            "certificacoes": []
+        }
+        return validate_json(dados_json, estrutura_padrao)
+
     except Exception as e:
         print("Erro ao processar texto com a API OpenAI:", e)
         return {
