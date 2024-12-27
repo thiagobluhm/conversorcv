@@ -5,6 +5,7 @@ import traceback
 import tempfile
 from engine import extract_text_from_pdf, process_text, create_docx_from_json
 
+
 def main():
     st.set_page_config(page_title="Conversor de CV PDF para DOCX", page_icon="📄", layout="centered")
 
@@ -13,12 +14,17 @@ def main():
     # Upload de arquivo
     uploaded_file = st.file_uploader("Envie seu currículo em PDF", type="pdf")
 
+    # Inicializar variáveis temporárias como None
+    temp_pdf_path = None
+    temp_json_path = None
+    temp_docx_path = None
+
     if uploaded_file:
         progress_bar = st.progress(0)
         status_text = st.empty()
 
         try:
-            # Salvar PDF temporariamente no sistema de arquivos temporário do Streamlit
+            # Salvar PDF temporariamente no sistema de arquivos temporário
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
                 temp_pdf.write(uploaded_file.getvalue())
                 temp_pdf_path = temp_pdf.name
@@ -26,7 +32,6 @@ def main():
             # Etapa 1: Extração de texto
             status_text.text("Etapa 1: Extraindo texto do PDF...")
             progress_bar.progress(20)
-            st.write(temp_pdf_path)
             pdf_text = extract_text_from_pdf(temp_pdf_path)
 
             if not pdf_text.strip():
@@ -36,7 +41,12 @@ def main():
             # Etapa 2: Processamento do texto
             status_text.text("Etapa 2: Processando o texto do currículo...")
             progress_bar.progress(50)
-            json_data = process_text(pdf_text)
+            try:
+                json_data = process_text(pdf_text)
+            except Exception as api_error:
+                st.error(f"Erro ao processar o texto com a API OpenAI: {api_error}")
+                return
+
             st.write("Texto extraído do PDF:", pdf_text)
             st.write("JSON gerado pela API:", json_data)
 
@@ -72,13 +82,14 @@ def main():
             st.error(traceback.format_exc())
 
         finally:
-            # Limpar arquivos temporários
+            # Limpar arquivos temporários, se existirem
             for temp_file in [temp_pdf_path, temp_json_path, temp_docx_path]:
                 try:
                     if temp_file and os.path.exists(temp_file):
                         os.remove(temp_file)
                 except Exception as cleanup_error:
                     print(f"Erro ao limpar arquivo temporário: {cleanup_error}")
+
 
 if __name__ == "__main__":
     main()
