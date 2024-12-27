@@ -10,9 +10,7 @@ from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.shared import RGBColor
-
-# Carregar variáveis de ambiente do arquivo .env
-load_dotenv()
+import streamlit as st
 
 def validate_json(dados, estrutura_padrao):
     """Valida e completa o JSON com estrutura padrão."""
@@ -83,6 +81,8 @@ def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
 
 def process_text(texto):
     """Processa o texto e retorna JSON estruturado com tratamento de erros aprimorado."""
+    # Carregar variáveis de ambiente do arquivo .env
+    load_dotenv()
     chave_api = os.getenv('OPENAI_API_KEY')
     if not chave_api:
         raise ValueError("Chave da API OpenAI não encontrada. Certifique-se de que a variável está configurada corretamente.")
@@ -122,6 +122,8 @@ def process_text(texto):
         # Comunicação com a API
         llm = ChatOpenAI(api_key=chave_api, temperature=0, model="gpt-4")
         resultado = llm.invoke(modelo_prompt)
+
+        st.write(resultado.content)
 
         # Log da resposta da API
         print("Resposta da API OpenAI:", resultado.content)
