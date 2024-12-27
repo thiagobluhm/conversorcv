@@ -100,13 +100,6 @@ def process_text(texto):
     - Use um texto descritivo e conciso
     - Se faltar alguma informação, use strings ou listas vazias
     - Garanta formatação e legibilidade adequadas
-
-    ESTRUTURA DE JSON EXIGIDA:
-    {{"informacoes_pessoais": {{"nome": "Nome Completo","cidade": "Cidade, Estado/País","bairro": "Bairro Opcional","email": "email@exemplo.com","telefone": "Telefone Opcional","cargo": "Cargo Atual ou Desejado"}},
-    "resumo_qualificacoes": [],
-    "experiencia_profissional": [],
-    "educacao": [],
-    "certificacoes": []}}
     """
     
     try:
@@ -114,21 +107,25 @@ def process_text(texto):
         llm = ChatOpenAI(api_key=chave_api, temperature=0, model="gpt-4")
         resultado = llm.invoke(prompt.format(texto=texto))
         
-        print("Resposta Completa do Modelo:")
+        print("Resposta da API OpenAI:")
         print(resultado.content)
-        
-        dados_json = json.loads(resultado.content)
-        return validate_json(dados_json, {
-            "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
-            "resumo_qualificacoes": [],
-            "experiencia_profissional": [],
-            "educacao": [],
-            "certificacoes": []
-        })
+
+        try:
+            dados_json = json.loads(resultado.content)
+        except json.JSONDecodeError as e:
+            print("Erro ao decodificar JSON:", e)
+            return {
+                "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
+                "resumo_qualificacoes": [],
+                "experiencia_profissional": [],
+                "educacao": [],
+                "certificacoes": []
+            }
+
+        return dados_json
     
     except Exception as e:
-        print("Erro detalhado ao processar texto:")
-        print(traceback.format_exc())
+        print("Erro ao processar texto com a API OpenAI:", e)
         return {
             "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
             "resumo_qualificacoes": [],
@@ -136,6 +133,7 @@ def process_text(texto):
             "educacao": [],
             "certificacoes": []
         }
+
 
 def extract_text_from_pdf(caminho_pdf):
     """Extrai o texto de um arquivo PDF."""
