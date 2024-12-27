@@ -68,7 +68,7 @@ def main():
     if not chave_api:
         st.write("Chave de API OpenAI não encontrada. Defina OPENAI_API_KEY no arquivo .env.")
     else:
-        st.write("Conexao com a OPENAI ok!")
+        st.write(f"Conexao com a OPENAI ok! {chave_api[-4:]}")
     
     st.markdown(
         "<h1 style='text-align: center; color: #4A9;'>Conversor de Currículo</h1>", 
