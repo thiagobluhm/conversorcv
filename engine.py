@@ -82,14 +82,16 @@ def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
 
 def process_text(texto):
     """Processa o texto e retorna JSON estruturado com tratamento de erros aprimorado."""
-    chave_api = os.environ.get('OPENAI_API_KEY')
+    chave_api = os.getenv('OPENAI_API_KEY')
     
     if not chave_api:
         raise ValueError("Chave de API OpenAI não encontrada. Defina OPENAI_API_KEY no arquivo .env.")
 
+    # Prompt ajustado para clareza e formato
     modelo_prompt = """
     Você é um especialista em extração de informações estruturadas de currículos.
     Analise o texto do currículo abaixo e gere um JSON estruturado com as seguintes informações:
+    
     - Informações pessoais: nome, cidade, email, telefone, cargo.
     - Resumo de qualificações.
     - Experiência profissional (empresa, cargo, período, atividades, projetos).
@@ -99,7 +101,7 @@ def process_text(texto):
     TEXTO DO CURRÍCULO:
     {texto}
     
-    ESTRUTURA ESPERADA DO JSON:
+    O JSON gerado deve seguir esta estrutura:
     {{
         "informacoes_pessoais": {{
             "nome": "Nome Completo",
@@ -140,8 +142,8 @@ def process_text(texto):
 
         try:
             dados_json = json.loads(resultado.content)  # Tenta converter a resposta para JSON
-        except json.JSONDecodeError:
-            print("Erro ao decodificar JSON. Verificando resposta da API.")
+        except json.JSONDecodeError as e:
+            print(f"Erro ao decodificar JSON: {e}. Conteúdo da resposta:\n{resultado.content}")
             return {
                 "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
                 "resumo_qualificacoes": [],
@@ -169,7 +171,6 @@ def process_text(texto):
             "educacao": [],
             "certificacoes": []
         }
-
 
 def extract_text_from_pdf(caminho_pdf):
     """Extrai o texto de um arquivo PDF."""
