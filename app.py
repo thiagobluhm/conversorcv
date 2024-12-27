@@ -4,14 +4,15 @@ import json
 import traceback
 import tempfile
 from engine import extract_text_from_pdf, process_text, create_docx_from_json
-
+from dotenv import load_dotenv
 
 def main():
     st.set_page_config(page_title="Conversor de CV PDF para DOCX", page_icon="📄", layout="centered")
 
     # Título e descrição
     st.markdown("<h1 style='text-align: center;'>Conversor de Currículo</h1>", unsafe_allow_html=True)
-
+    
+    load_dotenv()
     chave_api = os.getenv("OPENAI_API_KEY")
     if chave_api:
         st.write(f"Chave da API carregada com sucesso. {chave_api[-4:]}")
