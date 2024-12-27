@@ -26,6 +26,7 @@ def main():
             # Etapa 1: Extração de texto
             status_text.text("Etapa 1: Extraindo texto do PDF...")
             progress_bar.progress(20)
+            st.write(temp_pdf_path)
             pdf_text = extract_text_from_pdf(temp_pdf_path)
 
             if not pdf_text.strip():
