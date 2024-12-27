@@ -14,6 +14,8 @@ chave_api = os.environ.get('OPENAI_API_KEY')
     
 if not chave_api:
     st.write("Chave de API OpenAI não encontrada. Defina OPENAI_API_KEY no arquivo .env.")
+else:
+    st.write("Conexao com a OPENAI ok!")
     
 # Função para adicionar uma imagem de fundo a partir de um arquivo local
 def add_bg_from_local(image_file):
