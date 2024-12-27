@@ -132,10 +132,9 @@ def process_text(texto):
     """
 
     try:
-        print(f"Texto enviado à API:\n{texto[:500]}...\n")  # Log do texto enviado
-        prompt = PromptTemplate(template=modelo_prompt, input_variables=["texto"])
+        print(f"Texto enviado à API:\n{texto[:500]}...\n")  # Log do texto enviado       
         llm = ChatOpenAI(api_key=chave_api, temperature=0, model="gpt-4")
-        resultado = llm.invoke(prompt.format(texto=texto))
+        resultado = llm.invoke(modelo_prompt)
         
         print("Resposta da API OpenAI:")
         print(resultado.content)  # Exibe a resposta completa da API
