@@ -108,9 +108,10 @@ def main():
                 st.write("JSON gerado:", json_data)
 
                 # Salvar JSON temporariamente
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as temp_json:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".json", mode='w', encoding='utf-8') as temp_json:
                     json.dump(json_data, temp_json, indent=2)
                     temp_json_path = temp_json.name
+
                 
                 # Etapa 3: Criando documento Word
                 status_text.text("Etapa 3: Convertendo texto para formato Word...")
