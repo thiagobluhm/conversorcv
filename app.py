@@ -113,6 +113,7 @@ def main():
                 status_text.text("Etapa 1: Extraindo texto do PDF...")
                 progress_bar.progress(20)
                 pdf_text = extract_text_from_pdf("temp_uploaded_cv.pdf")
+                st.write("Texto extraído do PDF:", pdf_text)
                 
                 if not pdf_text:
                     st.error("Não foi possível extrair texto do PDF. Verifique o arquivo e tente novamente.")
