@@ -12,6 +12,12 @@ def main():
     # Título e descrição
     st.markdown("<h1 style='text-align: center;'>Conversor de Currículo</h1>", unsafe_allow_html=True)
 
+    chave_api = os.getenv("OPENAI_API_KEY")
+    if chave_api:
+        st.write(f"Chave da API carregada com sucesso. {chave_api[-4:]}")
+    else:
+        st.write("Chave da API não encontrada. Verifique as configurações do Streamlit Secrets.")
+
     # Formulário para upload do arquivo
     with st.form(key="upload_form"):
         uploaded_file = st.file_uploader("Envie seu currículo em PDF", type="pdf")
