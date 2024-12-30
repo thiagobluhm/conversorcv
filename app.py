@@ -160,6 +160,9 @@ def main():
             progress_bar.progress(50)
             json_data = process_text(pdf_text)
 
+            # IMPRIMINDO NA TELA O TEXTO EXTRAIDO
+            st.write(json_data)
+
             if not json_data:
                 st.error("Erro ao gerar JSON do currículo.")
                 return
