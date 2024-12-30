@@ -112,6 +112,8 @@ def process_text(texto):
         "certificacoes": []
     }}
     """
+    
+    st.write(modelo_prompt)
 
     try:
         # Log do texto enviado
@@ -141,33 +143,13 @@ def process_text(texto):
                  temperature= 0, 
                 max_tokens=4096
             )
+            st.write(response.choices[0].message.content)
             return response.choices[0].message.content
         
         
         except Exception as e:
             print(f"Erro ao processar texto com a API OpenAI: {e}")
-            return {}
-
-        st.write(resultado.content)
-
-        # Log da resposta da API
-        print("Resposta da API OpenAI:", resultado.content)
-
-        try:
-            # Tenta converter a resposta em JSON
-            dados_json = json.loads(resultado.content)
-            return dados_json
-        except json.JSONDecodeError as e:
-            print(f"Erro ao decodificar JSON: {e}")
-            print("Resposta recebida (não JSON):", resultado.content)
-            # Retorna uma estrutura padrão caso o JSON seja inválido
-            return {
-                "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
-                "resumo_qualificacoes": [],
-                "experiencia_profissional": [],
-                "educacao": [],
-                "certificacoes": []
-            }
+            return {}        
 
     except Exception as e:
         print(f"Erro ao processar texto com a API OpenAI: {e}")
