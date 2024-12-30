@@ -22,11 +22,9 @@ def validate_json(dados, estrutura_padrao):
 def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
     """Cria um documento Word formatado a partir de dados de um currículo em JSON."""
     try:
-        # Carregar dados JSON
         with open(arquivo_json, 'r', encoding='utf-8') as f:
             dados = json.load(f)
 
-        # Estrutura padrão para validação
         estrutura_padrao = {
             "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
             "resumo_qualificacoes": [],
@@ -36,77 +34,73 @@ def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
         }
         dados = validate_json(dados, estrutura_padrao)
 
-        # Criar um novo Documento
         doc = Document()
-
-        # Definir fonte padrão
         estilo = doc.styles['Normal']
         estilo.font.name = 'Calibri'
         estilo.font.size = Pt(11)
-        estilo.font.color.rgb = RGBColor(0, 0, 0)  # Define a cor preta
+        estilo.font.color.rgb = RGBColor(0, 0, 0)
 
-        # Função para adicionar espaço entre seções
         def adicionar_espaco():
             doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
-        # Nome (Cabeçalho Centralizado)
+        # Adicionar informações pessoais
         informacoes_pessoais = dados.get('informacoes_pessoais', {})
         nome = informacoes_pessoais.get('nome', 'Nome Não Encontrado')
         paragrafo_nome = doc.add_paragraph(nome)
-        paragrafo_nome.runs[0].bold = True
-        paragrafo_nome.runs[0].font.size = Pt(16)
+        nome_run = paragrafo_nome.runs[0]
+        nome_run.bold = True
+        nome_run.font.size = Pt(16)
         paragrafo_nome.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
 
-        # Informações de Contato (Alinhado à esquerda)
         adicionar_espaco()
-        contato = (
-            f"Cidade: {informacoes_pessoais.get('cidade', 'N/A')}\n"
-            f"Email: {informacoes_pessoais.get('email', 'N/A')}\n"
-            f"Telefone: {informacoes_pessoais.get('telefone', 'N/A')}\n"
-            f"Posição: {informacoes_pessoais.get('cargo', 'N/A')}"
-        )
+        contato = f"Cidade: {informacoes_pessoais.get('cidade', 'N/A')}\nEmail: {informacoes_pessoais.get('email', 'N/A')}\nTelefone: {informacoes_pessoais.get('telefone', 'N/A')}\nPosição: {informacoes_pessoais.get('cargo', 'N/A')}"
         doc.add_paragraph(contato)
 
-        # Resumo de Qualificações
-        if dados.get('resumo_qualificacoes'):
-            adicionar_espaco()
-            doc.add_paragraph('Resumo de Qualificações:', style='Heading 2')
-            for qual in dados['resumo_qualificacoes']:
-                doc.add_paragraph(f"- {qual}")
+        adicionar_espaco()
 
-        # Experiência Profissional
-        if dados.get('experiencia_profissional'):
-            adicionar_espaco()
-            doc.add_paragraph('Experiência Profissional:', style='Heading 2')
-            for exp in dados['experiencia_profissional']:
-                doc.add_paragraph(exp.get('empresa', 'Empresa Não Informada'), style='Heading 3')
-                doc.add_paragraph(f"Cargo: {exp.get('cargo', 'Cargo Não Informado')}")
-                doc.add_paragraph(f"Período: {exp.get('periodo', 'Período Não Informado')}")
-                if exp.get('atividades'):
-                    doc.add_paragraph("Atividades:")
-                    for atividade in exp['atividades']:
-                        doc.add_paragraph(f"- {atividade}", style='List Bullet')
+        # Adicionar resumo de qualificações
+        doc.add_heading('Resumo de Qualificações', level=2)
+        for qualificacao in dados.get('resumo_qualificacoes', []):
+            doc.add_paragraph(f"- {qualificacao}")
 
-        # Formação Acadêmica
-        if dados.get('educacao'):
-            adicionar_espaco()
-            doc.add_paragraph('Formação Acadêmica:', style='Heading 2')
-            for edu in dados['educacao']:
-                doc.add_paragraph(
-                    f"{edu.get('grau', 'Grau Não Informado')} - {edu.get('instituicao', 'Instituição Não Informada')}, "
-                    f"Concluído em {edu.get('ano_formatura', 'Ano Não Informado')}"
-                )
+        adicionar_espaco()
 
-        # Certificações
-        if dados.get('certificacoes'):
-            adicionar_espaco()
-            doc.add_paragraph('Certificações:', style='Heading 2')
-            for cert in dados['certificacoes']:
-                doc.add_paragraph(f"- {cert}")
+        # Adicionar experiência profissional
+        doc.add_heading('Experiência Profissional', level=2)
+        for experiencia in dados.get('experiencia_profissional', []):
+            empresa = experiencia.get('empresa', 'Empresa Não Informada')
+            cargo = experiencia.get('cargo', 'Cargo Não Informado')
+            periodo = experiencia.get('periodo', 'Período Não Informado')
+            local = experiencia.get('local', 'Local Não Informado')
+
+            doc.add_paragraph(f"{empresa} ({local})")
+            doc.add_paragraph(f"{cargo} - {periodo}", style='List Bullet')
+            for atividade in experiencia.get('atividades', []):
+                doc.add_paragraph(f"• {atividade}", style='List Bullet')
+
+        adicionar_espaco()
+
+        # Adicionar educação
+        doc.add_heading('Educação', level=2)
+        for educacao in dados.get('educacao', []):
+            instituicao = educacao.get('instituicao', 'Instituição Não Informada')
+            curso = educacao.get('curso', 'Curso Não Informado')
+            periodo = educacao.get('periodo', 'Período Não Informado')
+
+            doc.add_paragraph(f"{instituicao}")
+            doc.add_paragraph(f"{curso} - {periodo}", style='List Bullet')
+
+        adicionar_espaco()
+
+        # Adicionar certificações
+        doc.add_heading('Certificações', level=2)
+        for certificacao in dados.get('certificacoes', []):
+            doc.add_paragraph(f"- {certificacao}")
 
         # Salvar o documento
         doc.save(arquivo_saida)
         print(f"Currículo salvo em {arquivo_saida}")
+
     except Exception as e:
         print(f"Erro ao criar documento Word: {e}")
         print(traceback.format_exc())
@@ -144,16 +138,20 @@ def process_text(texto):
 
     try:
         response = openai.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=[
-                {"role": "system", "content": "Você é um especialista em análise de currículos e extração de informações."},
+                {"role": "system", "content": """Você é um especialista em análise de currículos e extração de informações. 
+                                                 Dê sua resposta APENAS com o json solicitado e nada mais. NÃO ESCREVA ```json na resposta!
+                """},
                 {"role": "user", "content": modelo_prompt}
             ],
             temperature=0,
             max_tokens=4096
         )
+          
+        conteudo = response.choices[0].message.content.replace("```json", "").strip()
+        st.write(f"CONTEUDO: {conteudo}")
 
-        conteudo = response.choices[0].message.content
         try:
             return json.loads(conteudo)
         except json.JSONDecodeError:
@@ -212,7 +210,7 @@ def main():
             json_data = process_text(pdf_text)
 
             # IMPRIMINDO NA TELA O TEXTO EXTRAIDO
-            # st.write(json_data)
+            #st.write(json_data)
 
             if not json_data:
                 st.error("Erro ao gerar JSON do currículo.")
