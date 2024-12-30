@@ -144,7 +144,7 @@ def process_text(texto):
 
     try:
         response = openai.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": "Você é um especialista em análise de currículos e extração de informações."},
                 {"role": "user", "content": modelo_prompt}
