@@ -89,7 +89,7 @@ def process_text(texto):
     client = OpenAI(api_key=chave_api)
 
     if not chave_api:
-        raise ValueError("Chave da API OpenAI não encontrada. Certifique-se de que a variável está configurada corretamente.")
+        st.error("Chave da API OpenAI não encontrada. Certifique-se de que a variável está configurada corretamente.")
 
     # Prompt atualizado para maior clareza e contexto
     modelo_prompt = f"""
