@@ -22,9 +22,11 @@ def validate_json(dados, estrutura_padrao):
 def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
     """Cria um documento Word formatado a partir de dados de um currículo em JSON."""
     try:
+        # Ler os dados do arquivo JSON
         with open(arquivo_json, 'r', encoding='utf-8') as f:
             dados = json.load(f)
 
+        # Estrutura padrão para validação
         estrutura_padrao = {
             "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
             "resumo_qualificacoes": [],
@@ -34,6 +36,7 @@ def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
         }
         dados = validate_json(dados, estrutura_padrao)
 
+        # Criar o documento Word
         doc = Document()
         estilo = doc.styles['Normal']
         estilo.font.name = 'Calibri'
@@ -41,15 +44,17 @@ def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
         estilo.font.color.rgb = RGBColor(0, 0, 0)
 
         def adicionar_espaco():
+            """Adiciona um parágrafo vazio para espaçamento."""
             doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
-        # Adicionar informações pessoais
+        # Informações pessoais
         informacoes_pessoais = dados.get('informacoes_pessoais', {})
         nome = informacoes_pessoais.get('nome', 'Nome Não Encontrado')
         paragrafo_nome = doc.add_paragraph(nome)
-        nome_run = paragrafo_nome.runs[0]
-        nome_run.bold = True
-        nome_run.font.size = Pt(16)
+        if paragrafo_nome.runs:
+            nome_run = paragrafo_nome.runs[0]
+            nome_run.bold = True
+            nome_run.font.size = Pt(16)
         paragrafo_nome.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
 
         adicionar_espaco()
@@ -58,52 +63,63 @@ def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
 
         adicionar_espaco()
 
-        # Adicionar resumo de qualificações
+        # Resumo de qualificações
         doc.add_heading('Resumo de Qualificações', level=2)
         for qualificacao in dados.get('resumo_qualificacoes', []):
             doc.add_paragraph(f"- {qualificacao}")
 
         adicionar_espaco()
 
-        # Adicionar experiência profissional
+        # Experiência profissional
         doc.add_heading('Experiência Profissional', level=2)
         for experiencia in dados.get('experiencia_profissional', []):
             empresa = experiencia.get('empresa', 'Empresa Não Informada')
             cargo = experiencia.get('cargo', 'Cargo Não Informado')
             periodo = experiencia.get('periodo', 'Período Não Informado')
             local = experiencia.get('local', 'Local Não Informado')
+            atividades = experiencia.get('atividades_exercidas', [])
 
-            doc.add_paragraph(f"{empresa} ({local})")
-            doc.add_paragraph(f"{cargo} - {periodo}", style='List Bullet')
-            for atividade in experiencia.get('atividades', []):
-                doc.add_paragraph(f"• {atividade}", style='List Bullet')
+            doc.add_paragraph(f"{empresa} ({local})", style='Heading 3')
+            doc.add_paragraph(f"{cargo} - {periodo}", style='Normal')
+            
+            if atividades:
+                doc.add_paragraph("Atividades exercidas:", style='Normal')
+                for atividade in atividades:
+                    doc.add_paragraph(f"• {atividade}", style='List Bullet')
+
+            ferramentas = experiencia.get('ferramentas', [])
+            if ferramentas:
+                doc.add_paragraph("Ferramentas utilizadas:", style='Normal')
+                for ferramenta in ferramentas:
+                    doc.add_paragraph(f"• {ferramenta}", style='List Bullet')
 
         adicionar_espaco()
 
-        # Adicionar educação
+        # Educação
         doc.add_heading('Educação', level=2)
         for educacao in dados.get('educacao', []):
             instituicao = educacao.get('instituicao', 'Instituição Não Informada')
             curso = educacao.get('curso', 'Curso Não Informado')
             periodo = educacao.get('periodo', 'Período Não Informado')
 
-            doc.add_paragraph(f"{instituicao}")
-            doc.add_paragraph(f"{curso} - {periodo}", style='List Bullet')
+            doc.add_paragraph(f"{instituicao}", style='Heading 3')
+            doc.add_paragraph(f"{curso} - {periodo}", style='Normal')
 
         adicionar_espaco()
 
-        # Adicionar certificações
+        # Certificações
         doc.add_heading('Certificações', level=2)
         for certificacao in dados.get('certificacoes', []):
-            doc.add_paragraph(f"- {certificacao}")
+            doc.add_paragraph(f"- {certificacao}", style='Normal')
 
-        # Salvar o documento
+        # Salvar o documento Word
         doc.save(arquivo_saida)
         print(f"Currículo salvo em {arquivo_saida}")
 
     except Exception as e:
         print(f"Erro ao criar documento Word: {e}")
         print(traceback.format_exc())
+
 
 
 def process_text(texto):
@@ -117,24 +133,87 @@ def process_text(texto):
         return {}
 
     modelo_prompt = f"""
-    TEXTO DO CURRÍCULO:
-    {texto}
+                        TEXTO DO CURRÍCULO:
+                        {texto}
 
-    Formato esperado:
-    {{
-        "informacoes_pessoais": {{
-            "nome": "",
-            "cidade": "",
-            "email": "",
-            "telefone": "",
-            "cargo": ""
-        }},
-        "resumo_qualificacoes": [],
-        "experiencia_profissional": [],
-        "educacao": [],
-        "certificacoes": []
-    }}
-    """
+                        Campos esperados e explicações:
+                        1. **informacoes_pessoais**: 
+                            Contém as informações pessoais do candidato, incluindo:
+                            - "nome": Nome completo do candidato.
+                            - "cidade": Cidade e estado de residência.
+                            - "email": Endereço de e-mail de contato.
+                            - "telefone": Número de telefone para contato.
+                            - "cargo": Cargo atual ou pretendido.
+
+                        2. **resumo_qualificacoes**:
+                            Lista com as principais habilidades, competências ou realizações do candidato, como:
+                            - Conhecimentos técnicos (ex.: Power BI, Python, SQL).
+                            - Soft skills (ex.: liderança, trabalho em equipe).
+                            - Principais realizações (ex.: "Aumentou a eficiência em X% ao implementar [projeto]").
+
+                        3. **experiencia_profissional**:
+                            Lista de experiências profissionais relevantes. Cada entrada deve conter:
+                            - "empresa": Nome da empresa.
+                            - "cargo": Cargo exercido.
+                            - "periodo": Período de atuação (ex.: Janeiro de 2020 - Dezembro de 2022).
+                            - "local": Local onde o trabalho foi realizado (ex.: Remoto ou Cidade/Estado).
+                            - "atividades_exercidas": Lista de atividades e responsabilidades no cargo. Detalhe as principais contribuições e tarefas realizadas.
+                            - "ferramentas": Lista das ferramentas, softwares ou tecnologias utilizadas no cargo (ex.: Power BI, Python, SQL, Tableau).
+
+                        4. **educacao**:
+                            Lista de formações acadêmicas do candidato. Cada entrada deve conter:
+                            - "instituicao": Nome da instituição de ensino.
+                            - "curso": Curso ou programa concluído.
+                            - "periodo": Período de realização (ex.: Janeiro de 2016 - Dezembro de 2020).
+
+                        5. **certificacoes**:
+                            Lista de certificações relevantes obtidas pelo candidato. Cada entrada deve conter:
+                            - Nome da certificação (ex.: "Microsoft Certified: Data Analyst Associate").
+                            - Instituição que emitiu a certificação (ex.: Microsoft, AWS, etc.).
+
+                        Formato esperado do JSON de saída:
+                        {{
+                            "informacoes_pessoais": {{
+                                "nome": "",
+                                "cidade": "",
+                                "email": "",
+                                "telefone": "",
+                                "cargo": ""
+                            }},
+                            "resumo_qualificacoes": [
+                                "Resumo 1",
+                                "Resumo 2"
+                            ],
+                            "experiencia_profissional": [
+                                {{
+                                    "empresa": "Empresa X",
+                                    "cargo": "Cargo Y",
+                                    "periodo": "Janeiro de 2020 - Dezembro de 2022",
+                                    "local": "Cidade/Estado",
+                                    "atividades_exercidas": [
+                                        "Atividade 1",
+                                        "Atividade 2"
+                                    ],
+                                    "ferramentas": [
+                                        "Ferramenta 1",
+                                        "Ferramenta 2"
+                                    ]
+                                }}
+                            ],
+                            "educacao": [
+                                {{
+                                    "instituicao": "Instituição A",
+                                    "curso": "Curso B",
+                                    "periodo": "Janeiro de 2016 - Dezembro de 2020"
+                                }}
+                            ],
+                            "certificacoes": [
+                                "Certificação 1",
+                                "Certificação 2"
+                            ]
+                        }}
+                        """
+
 
     try:
         response = openai.chat.completions.create(
@@ -150,7 +229,7 @@ def process_text(texto):
         )
           
         conteudo = response.choices[0].message.content.replace("```json", "").strip()
-        # st.write(f"CONTEUDO: {conteudo}")
+        st.write(f"CONTEUDO: {conteudo}")
 
         try:
             return json.loads(conteudo)
