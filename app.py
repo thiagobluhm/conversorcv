@@ -92,7 +92,7 @@ def process_text(texto):
     """
 
     try:
-        response = openai.ChatCompletion.create(
+        response = openai.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "Você é um especialista em análise de currículos e extração de informações."},
@@ -102,7 +102,7 @@ def process_text(texto):
             max_tokens=4096
         )
 
-        conteudo = response['choices'][0]['message']['content']
+        conteudo = response.choices[0].message.content
         try:
             return json.loads(conteudo)
         except json.JSONDecodeError:
