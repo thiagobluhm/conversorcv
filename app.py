@@ -4,6 +4,7 @@ import json
 import traceback
 import tempfile
 from dotenv import load_dotenv
+import openai
 from openai import OpenAI
 import re
 from PyPDF2 import PdfReader
@@ -86,7 +87,8 @@ def process_text(texto):
     # Carregar variáveis de ambiente do arquivo .env
     load_dotenv()
     chave_api = os.getenv('OPENAI_API_KEY')
-    clienteOpenAI = OpenAI(api_key=chave_api)
+    #clienteOpenAI = OpenAI(api_key=chave_api)
+    openai.api_key = chave_api
 
     if not chave_api:
         st.error("Chave da API OpenAI não encontrada. Certifique-se de que a variável está configurada corretamente.")
@@ -121,7 +123,7 @@ def process_text(texto):
 
         # Comunicação com a API
         try:
-            response = clienteOpenAI.chat.completions.create(
+            response = openai.chat.completions.create(
                 model="gpt-4o",
                 messages=[
                  {
