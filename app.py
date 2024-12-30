@@ -7,10 +7,14 @@ from dotenv import load_dotenv
 import openai
 from PyPDF2 import PdfReader
 from docx import Document
-from docx.shared import Pt
+from docx.shared import Pt, Inches
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.shared import RGBColor
+from pathlib import Path
+import base64
 import re
+
+os.chdir(os.path.abspath(os.curdir))
 
 def validate_json(dados, estrutura_padrao):
     """Valida e completa o JSON com estrutura padrão."""
@@ -19,14 +23,14 @@ def validate_json(dados, estrutura_padrao):
             dados[chave] = estrutura_padrao[chave]
     return dados
 
-def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
-    """Cria um documento Word formatado a partir de dados de um currículo em JSON."""
+
+
+def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx', logo_path='portfoliologotech.png'):
+    """Cria um documento Word formatado a partir de dados de um currículo em JSON e adiciona um logo."""
     try:
-        # Ler os dados do arquivo JSON
         with open(arquivo_json, 'r', encoding='utf-8') as f:
             dados = json.load(f)
 
-        # Estrutura padrão para validação
         estrutura_padrao = {
             "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
             "resumo_qualificacoes": [],
@@ -36,7 +40,6 @@ def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
         }
         dados = validate_json(dados, estrutura_padrao)
 
-        # Criar o documento Word
         doc = Document()
         estilo = doc.styles['Normal']
         estilo.font.name = 'Calibri'
@@ -46,6 +49,14 @@ def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
         def adicionar_espaco():
             """Adiciona um parágrafo vazio para espaçamento."""
             doc.add_paragraph().paragraph_format.space_after = Pt(12)
+
+        # Adicionar logo ao cabeçalho
+        if logo_path:
+            header = doc.sections[0].header
+            header_paragraph = header.paragraphs[0]
+            run = header_paragraph.add_run()
+            run.add_picture(logo_path, width=Inches(1.5))  # Ajusta o tamanho do logo
+            header_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT  # Alinha à direita
 
         # Informações pessoais
         informacoes_pessoais = dados.get('informacoes_pessoais', {})
@@ -119,6 +130,7 @@ def create_docx_from_json(arquivo_json, arquivo_saida='curriculo.docx'):
     except Exception as e:
         print(f"Erro ao criar documento Word: {e}")
         print(traceback.format_exc())
+
 
 
 
@@ -256,8 +268,58 @@ def clear_text(texto):
     texto = re.sub(r'\n*Página \d+ de \d+\n*', '', texto)
     return texto.strip()
 
+# Função para adicionar uma imagem de fundo a partir de um arquivo local
+def add_bg_from_local(image_file):
+    with Path(image_file).open("rb") as file:
+        encoded_string = base64.b64encode(file.read()).decode()
+    st.markdown(
+        f"""
+        <style>
+        .stApp {{
+            background-image: url(data:image/png;base64,{encoded_string});
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+# Função para exibir uma imagem de logo no topo a partir de um arquivo local
+def add_logo_from_local(logo_file):
+    with Path(logo_file).open("rb") as file:
+        encoded_string = base64.b64encode(file.read()).decode()
+    st.markdown(
+        f"""
+        <style>
+        [data-testid="stAppViewContainer"] > .main {{
+            padding-top: 0px;
+        }}
+        .logo-container {{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem 0;
+        }}
+        .logo-container img {{
+            max-width: 200px;
+            height: auto;
+        }}
+        </style>
+        <div class="logo-container">
+            <img src="data:image/png;base64,{encoded_string}" alt="Logo">
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
 def main():
     st.set_page_config(page_title="Conversor de CV PDF para DOCX **", page_icon="📄", layout="centered")
+    
+    add_bg_from_local("bg.png")
+    add_logo_from_local("logo.png")
 
     st.markdown("<h1 style='text-align: center;'>Conversor de Currículo</h1>", unsafe_allow_html=True)
 
