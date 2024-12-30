@@ -4,7 +4,7 @@ import json
 import traceback
 import tempfile
 from dotenv import load_dotenv
-
+from openai import OpenAI
 import re
 from PyPDF2 import PdfReader
 from langchain_openai import ChatOpenAI
@@ -13,7 +13,6 @@ from docx import Document
 from docx.shared import Pt
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.shared import RGBColor
-
 
 
 def validate_json(dados, estrutura_padrao):
@@ -87,18 +86,14 @@ def process_text(texto):
     # Carregar variáveis de ambiente do arquivo .env
     load_dotenv()
     chave_api = os.getenv('OPENAI_API_KEY')
+    client = OpenAI(OpenAI(api_key=chave_api))
+
     if not chave_api:
         raise ValueError("Chave da API OpenAI não encontrada. Certifique-se de que a variável está configurada corretamente.")
 
     # Prompt atualizado para maior clareza e contexto
     modelo_prompt = f"""
-    Você é um especialista em extração de informações de currículos. Analise o texto abaixo e produza um JSON estruturado com:
-    - Informações pessoais (nome, cidade, email, telefone, cargo desejado).
-    - Resumo de qualificações.
-    - Experiência profissional (empresa, cargo, período, atividades, projetos).
-    - Formação acadêmica (instituição, grau, ano de conclusão).
-    - Certificações.
-
+    
     TEXTO DO CURRÍCULO:
     {texto}
 
@@ -123,8 +118,35 @@ def process_text(texto):
         print(f"Texto enviado para API (primeiros 500 caracteres): {texto[:500]}")
 
         # Comunicação com a API
-        llm = ChatOpenAI(api_key=chave_api, temperature=0, model="gpt-4")
-        resultado = llm.invoke(modelo_prompt)
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                 {
+                      "role": "system", 
+                      "content": """Você é um especialista em extração de informações de currículos. 
+                      Analise o texto abaixo e produza um JSON estruturado com:
+                                    - Informações pessoais (nome, cidade, email, telefone, cargo desejado).
+                                    - Resumo de qualificações.
+                                    - Experiência profissional (empresa, cargo, período, atividades, projetos).
+                                    - Formação acadêmica (instituição, grau, ano de conclusão).
+                                    - Certificações.
+                                 """
+                     },
+                    {
+                        "role": "user",
+                        "content": modelo_prompt
+                    }
+                ],
+                 temperature= 0, 
+                max_tokens=4096
+            )
+            return response.choices[0].message.content
+        
+        
+        except Exception as e:
+            print(f"Erro ao processar texto com a API OpenAI: {e}")
+            return {}
 
         st.write(resultado.content)
 
