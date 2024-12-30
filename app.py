@@ -150,7 +150,7 @@ def process_text(texto):
         )
           
         conteudo = response.choices[0].message.content.replace("```json", "").strip()
-        st.write(f"CONTEUDO: {conteudo}")
+        # st.write(f"CONTEUDO: {conteudo}")
 
         try:
             return json.loads(conteudo)
