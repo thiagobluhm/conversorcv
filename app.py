@@ -129,7 +129,7 @@ def clear_text(texto):
     return texto.strip()
 
 def main():
-    st.set_page_config(page_title="Conversor de CV PDF para DOCX", page_icon="📄", layout="centered")
+    st.set_page_config(page_title="Conversor de CV PDF para DOCX **", page_icon="📄", layout="centered")
 
     st.markdown("<h1 style='text-align: center;'>Conversor de Currículo</h1>", unsafe_allow_html=True)
 
