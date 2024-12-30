@@ -86,7 +86,7 @@ def process_text(texto):
     # Carregar variáveis de ambiente do arquivo .env
     load_dotenv()
     chave_api = os.getenv('OPENAI_API_KEY')
-    client = OpenAI(api_key=chave_api)
+    clienteOpenAI = OpenAI(api_key=chave_api)
 
     if not chave_api:
         st.error("Chave da API OpenAI não encontrada. Certifique-se de que a variável está configurada corretamente.")
@@ -121,7 +121,7 @@ def process_text(texto):
 
         # Comunicação com a API
         try:
-            response = client.chat.completions.create(
+            response = clienteOpenAI.chat.completions.create(
                 model="gpt-4o",
                 messages=[
                  {
