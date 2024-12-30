@@ -276,10 +276,12 @@ def add_bg_from_local(image_file):
         f"""
         <style>
         .stApp {{
-            background-image: url(data:image/png;base64,{encoded_string});
+            background-color: #FFFFFF;
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
+            border-color: rgba(31,216,135,1) ;
+ 
         }}
         </style>
         """,
@@ -318,7 +320,7 @@ def add_logo_from_local(logo_file):
 def main():
     st.set_page_config(page_title="Conversor de CV PDF para DOCX **", page_icon="📄", layout="centered")
     
-    add_bg_from_local("bg.png")
+    #add_bg_from_local("bg.png")
     add_logo_from_local("portfoliologotech.png")
 
     st.markdown("<h1 style='text-align: center;'>Conversor de Currículo</h1>", unsafe_allow_html=True)
