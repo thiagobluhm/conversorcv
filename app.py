@@ -154,7 +154,7 @@ def main():
                 st.error("Não foi possível extrair texto do PDF.")
                 return
 
-            st.write("Texto extraído do PDF:", pdf_text)
+            #st.write("Texto extraído do PDF:", pdf_text)
 
             status_text.text("Etapa 2: Processando o texto do currículo...")
             progress_bar.progress(50)
