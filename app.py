@@ -115,7 +115,7 @@ def process_text(texto):
     }}
     """
     
-    st.write(modelo_prompt)
+    #st.write(modelo_prompt)
 
     try:
         # Log do texto enviado
@@ -145,7 +145,7 @@ def process_text(texto):
                  temperature= 0, 
                 max_tokens=4096
             )
-            st.write(response.choices[0].message.content)
+            #st.write(response.choices[0].message.content)
             return response.choices[0].message.content
         
         
@@ -235,10 +235,6 @@ def main():
                 st.write("JSON gerado pela API:", json_data)
             except Exception as e:
                 st.error(f"Erro ao processar texto com a API OpenAI: {e}")
-                return
-
-            if not json_data.get("informacoes_pessoais", {}).get("nome"):
-                st.error("O JSON gerado está vazio ou incompleto.")
                 return
 
             # Etapa 3: Salvar JSON temporariamente
