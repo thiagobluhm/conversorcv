@@ -86,7 +86,7 @@ def process_text(texto):
     # Carregar variáveis de ambiente do arquivo .env
     load_dotenv()
     chave_api = os.getenv('OPENAI_API_KEY')
-    client = OpenAI(OpenAI(api_key=chave_api))
+    client = OpenAI(api_key=chave_api)
 
     if not chave_api:
         raise ValueError("Chave da API OpenAI não encontrada. Certifique-se de que a variável está configurada corretamente.")
@@ -125,7 +125,7 @@ def process_text(texto):
                  {
                       "role": "system", 
                       "content": """Você é um especialista em extração de informações de currículos. 
-                      Analise o texto abaixo e produza um JSON estruturado com:
+                       Analise o texto abaixo e produza um JSON estruturado com:
                                     - Informações pessoais (nome, cidade, email, telefone, cargo desejado).
                                     - Resumo de qualificações.
                                     - Experiência profissional (empresa, cargo, período, atividades, projetos).
