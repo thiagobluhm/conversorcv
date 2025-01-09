@@ -25,7 +25,7 @@ class cvFormatter():
                 dados[chave] = estrutura_padrao[chave]
         return dados
 
-    def create_docx_from_json(self, arquivo_json, arquivo_saida='curriculo.docx', logo_path='portfoliologotech.png'):
+    def create_docx_from_json(self, arquivo_json, arquivo_saida='curriculo.docx', logo_path='logo.jpeg'):
         """Cria um documento Word formatado a partir de dados de um currículo em JSON e adiciona um logo."""
         try:
             with open(arquivo_json, 'r', encoding='utf-8') as f:
@@ -228,12 +228,13 @@ class cvFormatter():
             response = openai.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {"role": "system", "content": """Você é um especialista em análise de currículos e extração de informações. 
-                                                    Dê sua resposta APENAS com o json solicitado e nada mais. NÃO ESCREVA ```json na resposta!
+                    {"role": "system", "content": """Você é um especialista em análise de currículos e extração de informações.
+                                                     Colete todas as informações possíveis, não deixe nada passar. 
+                                                     Dê sua resposta APENAS com o json solicitado e nada mais. NÃO ESCREVA ```json na resposta!
                     """},
                     {"role": "user", "content": modelo_prompt}
                 ],
-                temperature=0,
+                temperature=0.2,
                 max_tokens=4096
             )
             
