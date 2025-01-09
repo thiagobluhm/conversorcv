@@ -23,7 +23,7 @@ def main():
     st.set_page_config(page_title="Conversor de CV PDF para DOCX **", page_icon="📄", layout="centered")
     
     #add_bg_from_local("bg.png")
-    cvformatador.add_logo_from_local("portfoliologotech.png")
+    cvformatador.add_logo_from_local("logo.jpeg")
 
     st.markdown("<h1 style='text-align: center;'>Conversor de Currículo</h1>", unsafe_allow_html=True)
 
