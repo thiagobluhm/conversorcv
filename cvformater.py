@@ -274,7 +274,7 @@ class cvFormatter():
             f"""
             <style>
             .stApp {{
-                background-color: rgba(247,247,247,1);
+                background-color: rgba(247,247,247,0.75);
                 background-size: cover;
                 background-position: center;
                 background-repeat: no-repeat;
