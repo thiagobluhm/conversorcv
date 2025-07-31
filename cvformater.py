@@ -13,6 +13,7 @@ import re
 import os 
 import streamlit as st
 os.chdir(os.path.abspath(os.curdir))
+from docx.shared import Inches, Cm
 
 class cvFormatter():
     def __init__(self):
@@ -51,11 +52,20 @@ class cvFormatter():
                 doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
             # Adicionar logo ao cabeçalho
+            # if logo_path:
+            #     header = doc.sections[0].header
+            #     header_paragraph = header.paragraphs[0]
+            #     run = header_paragraph.add_run()
+            #     run.add_picture(logo_path, width=Inches(0.8))  # Ajusta o tamanho do logo
+            #     header_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT  # Alinha à direita
             if logo_path:
-                header = doc.sections[0].header
+                section = doc.sections[0]
+                section.header_distance = Cm(0.6)  # diminua para "subir" mais (ex.: 0.5, 0.4)
+
+                header = section.header
                 header_paragraph = header.paragraphs[0]
                 run = header_paragraph.add_run()
-                run.add_picture(logo_path, width=Inches(1.5))  # Ajusta o tamanho do logo
+                run.add_picture(logo_path, width=Inches(0.8))  # Ajusta o tamanho do logo
                 header_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT  # Alinha à direita
 
             # Informações pessoais
