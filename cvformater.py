@@ -51,16 +51,9 @@ class cvFormatter():
                 """Adiciona um parágrafo vazio para espaçamento."""
                 doc.add_paragraph().paragraph_format.space_after = Pt(12)
 
-            # Adicionar logo ao cabeçalho
-            # if logo_path:
-            #     header = doc.sections[0].header
-            #     header_paragraph = header.paragraphs[0]
-            #     run = header_paragraph.add_run()
-            #     run.add_picture(logo_path, width=Inches(0.8))  # Ajusta o tamanho do logo
-            #     header_paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.RIGHT  # Alinha à direita
             if logo_path:
                 section = doc.sections[0]
-                section.header_distance = Cm(0.6)  # diminua para "subir" mais (ex.: 0.5, 0.4)
+                section.header_distance = Cm(0.6)
 
                 header = section.header
                 header_paragraph = header.paragraphs[0]
@@ -233,7 +226,6 @@ class cvFormatter():
                             }}
                             """
 
-
         try:
             response = openai.chat.completions.create(
                 model="gpt-4o",
@@ -249,7 +241,7 @@ class cvFormatter():
             )
             
             conteudo = response.choices[0].message.content.replace("```json", "").strip()
-            st.write(f"CONTEUDO: {conteudo}")
+            # st.write(f"CONTEUDO: {conteudo}")
 
             try:
                 return json.loads(conteudo)

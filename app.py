@@ -71,6 +71,7 @@ def main():
                 cvformatador.create_docx_from_json(temp_json_path, temp_docx.name)
                 temp_docx_path = temp_docx.name
 
+            status_text.text("Processo concluído")
             progress_bar.progress(100)
             st.success("Conversão concluída com sucesso! Baixe seu currículo abaixo.")
             with open(temp_docx_path, "rb") as file:
