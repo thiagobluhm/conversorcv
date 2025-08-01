@@ -26,7 +26,7 @@ class cvFormatter():
                 dados[chave] = estrutura_padrao[chave]
         return dados
 
-    def create_docx_from_json(self, arquivo_json, arquivo_saida='curriculo.docx', logo_path='logo2.png'):
+    def create_docx_from_json(self, arquivo_json, arquivo_saida='curriculo.docx', logo_path='Logo2.png'):
         """Cria um documento Word formatado a partir de dados de um currículo em JSON e adiciona um logo."""
         try:
             with open(arquivo_json, 'r', encoding='utf-8') as f:
