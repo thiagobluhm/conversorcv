@@ -242,7 +242,6 @@ class cvFormatter():
             
             conteudo = response.choices[0].message.content.replace("```json", "").strip()
             # st.write(f"CONTEUDO: {conteudo}")
-            print(conteudo)
 
             try:
                 return json.loads(conteudo)

@@ -25,7 +25,7 @@ def main():
     #add_bg_from_local("bg.png")
     cvformatador.add_logo_from_local("Logo2.png")
 
-    st.markdown("<h1 style='text-align: center;'>Conversor de Currículo</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center;'>Conversor de Curriculo</h1>", unsafe_allow_html=True)
 
     with st.form(key="upload_form"):
         uploaded_file = st.file_uploader("Envie seu currículo em PDF", type="pdf")
