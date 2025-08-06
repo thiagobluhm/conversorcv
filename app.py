@@ -78,7 +78,7 @@ def main():
                 st.download_button(
                     label="Baixar currículo em DOCX",
                     data=file.read(),
-                    file_name=f'Currículo_{json_data['informacoes_pessoais']['nome']}.docx',
+                    file_name=f'Curriculo_{json_data['informacoes_pessoais']['nome']}.docx',
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 )
 
