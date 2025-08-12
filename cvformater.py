@@ -14,6 +14,7 @@ import os
 import streamlit as st
 os.chdir(os.path.abspath(os.curdir))
 from docx.shared import Inches, Cm
+import datetime
 
 class cvFormatter():
     def __init__(self):
@@ -26,7 +27,7 @@ class cvFormatter():
                 dados[chave] = estrutura_padrao[chave]
         return dados
 
-    def create_docx_from_json(self, arquivo_json, arquivo_saida='curriculo.docx', logo_path='Logo2.png'):
+    def create_docx_curriculo(self, arquivo_json, arquivo_saida='curriculo.docx', logo_path='Logo2.png'):
         """Cria um documento Word formatado a partir de dados de um currículo em JSON e adiciona um logo."""
         try:
             with open(arquivo_json, 'r', encoding='utf-8') as f:
@@ -134,7 +135,107 @@ class cvFormatter():
             print(f"Erro ao criar documento Word: {e}")
             print(traceback.format_exc())
 
-    def process_text(self, texto):
+
+    def create_docx_parecer(self, arquivo_json, arquivo_saida: str = "parecer.docx", responsavel: str = "Responsável"):
+
+        try:
+            with open(arquivo_json, 'r', encoding='utf-8') as f:
+                dados = json.load(f)
+
+            """
+            Cria um parecer de candidato em DOCX com estrutura básica:
+            - Cabeçalho: título fixo + responsável + data
+            - Nome do candidato (se existir)
+            - Blocos: Formação, Perfil Profissional, Perfil Comportamental (em branco)
+
+            O JSON pode conter:
+            {
+                "nome": "Fulano",
+                "formacao": [...],
+                "perfil_profissional": [...],
+                "perfil_comportamental": "...",  # opcional
+                ...
+            }
+            """
+
+            estrutura_padrao = {
+                "nome": "Fulano",
+                "formacao": [...],
+                "perfil_profissional": [...],
+                "perfil_comportamental": "..."
+            }
+
+            dados = self.validate_json(dados, estrutura_padrao)
+
+            doc = Document()
+
+            # ---------- estilo base ----------
+            estilo = doc.styles["Normal"]
+            estilo.font.name = "Calibri"
+            estilo.font.size = Pt(11)
+            estilo.font.color.rgb = RGBColor(0, 0, 0)
+
+            # ---------- título ----------
+            p_titulo = doc.add_paragraph("PARECER DE CANDIDATO")
+            p_titulo.runs[0].bold = True
+            p_titulo.runs[0].font.size = Pt(14)
+            p_titulo.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+
+            # ---------- responsável + data ----------
+            hoje = datetime.date.today().strftime("%d/%m/%Y")
+            info = doc.add_paragraph(f"Responsável: {responsavel} | Data: {hoje}")
+            info.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+
+            doc.add_paragraph()  # linha em branco
+
+            # ---------- nome do candidato ----------
+            if dados.get("nome"):
+                p_nome = doc.add_paragraph(dados["nome"].upper())
+                p_nome.runs[0].bold = True
+                p_nome.runs[0].font.size = Pt(12)
+                p_nome.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+                doc.add_paragraph()
+
+            # ---------- formação ----------
+            doc.add_heading("Formação", level=2)
+            for f in dados.get("formacao", []):
+                linha = f"{f.get('grau', '')} em {f.get('curso', '')} - {f.get('instituicao', '')} ({f.get('conclusao', '')})"
+                doc.add_paragraph(linha)
+            if not dados.get("formacao"):
+                doc.add_paragraph("N/A")
+
+            doc.add_paragraph()
+
+            # ---------- perfil profissional ----------
+            doc.add_heading("Perfil Profissional", level=2)
+            for item in dados.get("perfil_profissional", []):
+                # doc.add_paragraph(item, style="List Bullet")
+                doc.add_paragraph(item)
+            if not dados.get("perfil_profissional"):
+                doc.add_paragraph("N/A")
+
+            doc.add_paragraph()
+
+            # ---------- perfil comportamental ----------
+            doc.add_heading("Perfil Comportamental", level=2)
+            perfil_comp = dados.get("perfil_comportamental", "")
+            doc.add_paragraph(perfil_comp or "—")
+
+            doc.add_paragraph()
+
+            # ---------- salvar ----------
+            try:
+                doc.save(arquivo_saida)
+                print(f"Parecer salvo em: {arquivo_saida}")
+            except Exception as e:
+                print(f"Erro ao salvar DOCX: {e}")
+                print(traceback.format_exc())
+
+        except Exception as e:
+            print(f"Erro ao criar documento Word: {e}")
+            print(traceback.format_exc())
+
+    def process_text_curriculo(self, texto):
         """Processa o texto e retorna JSON estruturado."""
         load_dotenv()
         chave_api = os.getenv('OPENAI_API_KEY')
@@ -252,6 +353,88 @@ class cvFormatter():
             print(f"Erro ao processar texto com a API OpenAI: {e}")
             return {}
 
+    def process_text_parecer(self, texto):
+        """Processa o texto e retorna JSON estruturado."""
+        load_dotenv()
+        chave_api = os.getenv('OPENAI_API_KEY')
+        openai.api_key = chave_api
+
+        if not chave_api:
+            st.error("Chave da API OpenAI não encontrada.")
+            return {}
+
+        modelo_prompt_parecer = f"""
+            TEXTO DO CURRÍCULO ORIGINAL:
+            {texto}
+
+            ### INSTRUÇÕES
+            - Extraia só o que estiver presente no currículo; não invente dados.
+            - Preencha **todos** os campos abaixo sempre que encontrar a informação.
+            - **Formato de saída**: JSON **sem** crases, sem ```json, sem comentários.
+
+            ### CAMPOS E PADRÕES ESPERADOS
+
+            4. formacao (lista de objetos)
+            • grau        → "Tecnólogo", "Bacharel", "MBA", etc.
+            • curso       → Nome do curso
+            • instituicao → Onde cursou
+            • conclusao   → "2018", "cursando", etc.
+
+            5. perfil_profissional (listagem de 2 parágrafos, nesta ordem)
+            • Parágrafo 1 – trajetória (empresas, cargos, período, volume de entregas).  
+            • Parágrafo 2 – competências + projetos relevantes iniciados por verbo no infinitivo/gerúndio.
+
+            ### EXEMPLO DE SAÍDA ESPERADA
+            {{
+            "formacao": [
+                {{
+                "grau": "Tecnólogo",
+                "curso": "Análise de Sistemas",
+                "instituicao": "Faculdade X",
+                "conclusao": "2012"
+                }},
+                {{
+                "grau": "MBA",
+                "curso": "Gestão de Projetos",
+                "instituicao": "Universidade Y",
+                "conclusao": "2019"
+                }}
+            ],
+            "perfil_profissional": [
+                "Camila atua desde fevereiro de 2021 na empresa Sankhya como Consultora de Implantação de ERP Sênior – módulo HCM, participando de 15 projetos de implantação e conduzindo treinamentos para clientes em vários estados. Antes disso, trabalhou na Solar Coca-Cola, YDUQS e Adtalem com foco em SAP HCM, somando experiência prévia de seis anos em rotinas de departamento pessoal.",
+                "Domina metodologias ágeis e Waterfall, conduz migrações de dados de sistemas legados, parametriza folha, ponto e avaliação de desempenho e implanta soluções de ERP. Implantou dois novos Centros de Distribuição e uma loja, integrou plataformas Totvs e Fortes e automatizou rotinas de importação de pedidos, entregando ganhos de produtividade em até 5 meses."
+            ]
+            }}
+            """
+
+        try:
+            response = openai.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": """Você é um especialista em análise de currículos e extração de informações.
+                                                     Colete todas as informações possíveis, não deixe nada passar. 
+                                                     Dê sua resposta APENAS com o json solicitado e nada mais. NÃO ESCREVA ```json na resposta!
+                    """},
+                    {"role": "user", "content": modelo_prompt_parecer}
+                ],
+                temperature=0.2,
+                max_tokens=4096
+            )
+            
+            conteudo = response.choices[0].message.content.replace("```json", "").strip()
+            print(f"CONTEUDO: {conteudo}")
+
+            try:
+                return json.loads(conteudo)
+            except json.JSONDecodeError:
+                print("Erro ao converter resposta da API para JSON.")
+                return {}
+        except Exception as e:
+            print(f"Erro ao processar texto com a API OpenAI: {e}")
+            return {}
+
+
+
     def extract_text_from_pdf(self, caminho_pdf):
         """Extrai o texto de um arquivo PDF."""
         try:
@@ -289,9 +472,36 @@ class cvFormatter():
         )
 
     # Função para exibir uma imagem de logo no topo a partir de um arquivo local
+    # def add_logo_from_local(self, logo_file):
+    #     with Path(logo_file).open("rb") as file:
+    #         encoded_string = base64.b64encode(file.read()).decode()
+    #     st.markdown(
+    #         f"""
+    #         <style>
+    #         [data-testid="stAppViewContainer"] > .main {{
+    #             padding-top: 0px;
+    #         }}
+    #         .logo-container {{
+    #             display: flex;
+    #             justify-content: center;
+    #             align-items: center;
+    #             padding: 1rem 0;
+    #         }}
+    #         .logo-container img {{
+    #             max-width: 200px;
+    #             height: auto;
+    #         }}
+    #         </style>
+    #         <div class="logo-container">
+    #             <img src="data:image/png;base64,{encoded_string}" alt="Logo">
+    #         </div>
+    #         """,
+    #         unsafe_allow_html=True
+    #     )
     def add_logo_from_local(self, logo_file):
         with Path(logo_file).open("rb") as file:
             encoded_string = base64.b64encode(file.read()).decode()
+
         st.markdown(
             f"""
             <style>
@@ -302,11 +512,23 @@ class cvFormatter():
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                padding: 1rem 0;
+                padding: 1vh 0; /* margem baseada na altura da tela */
             }}
             .logo-container img {{
-                max-width: 200px;
+                max-height: 20vh; /* altura máxima baseada na tela */
+                max-width: 80vw;  /* largura máxima baseada na tela */
                 height: auto;
+                width: auto;
+            }}
+
+            /* Ajuste fino para telas pequenas (MacBook e similares) */
+            @media only screen and (max-width: 1440px) {{
+                .logo-container {{
+                    padding: 3vh 0;
+                }}
+                .logo-container img {{
+                    max-height: 10vh;
+                }}
             }}
             </style>
             <div class="logo-container">
@@ -315,4 +537,5 @@ class cvFormatter():
             """,
             unsafe_allow_html=True
         )
+
 
