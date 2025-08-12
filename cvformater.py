@@ -150,7 +150,7 @@ class cvFormatter():
 
             O JSON pode conter:
             {
-                "nome": "Fulano",
+                "nome": "Nome do Candidato",
                 "formacao": [...],
                 "perfil_profissional": [...],
                 "perfil_comportamental": "...",  # opcional
@@ -159,8 +159,9 @@ class cvFormatter():
             """
 
             estrutura_padrao = {
-                "nome": "Fulano",
+                "nome": '',
                 "formacao": [...],
+                "competencias": [...], 
                 "perfil_profissional": [...],
                 "perfil_comportamental": "..."
             }
@@ -190,7 +191,7 @@ class cvFormatter():
 
             # ---------- nome do candidato ----------
             if dados.get("nome"):
-                p_nome = doc.add_paragraph(dados["nome"].upper())
+                p_nome = doc.add_paragraph(dados.get("nome", ""))
                 p_nome.runs[0].bold = True
                 p_nome.runs[0].font.size = Pt(12)
                 p_nome.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
@@ -202,6 +203,15 @@ class cvFormatter():
                 linha = f"{f.get('grau', '')} em {f.get('curso', '')} - {f.get('instituicao', '')} ({f.get('conclusao', '')})"
                 doc.add_paragraph(linha)
             if not dados.get("formacao"):
+                doc.add_paragraph("N/A")
+
+            doc.add_paragraph()
+
+            # ---------- competências ----------
+            doc.add_heading("Competências", level=2)
+            for c in dados.get("competencias", []):
+                doc.add_paragraph(c)
+            if not dados.get("competencias"):
                 doc.add_paragraph("N/A")
 
             doc.add_paragraph()
@@ -374,17 +384,28 @@ class cvFormatter():
 
             ### CAMPOS E PADRÕES ESPERADOS
 
-            4. formacao (lista de objetos)
+            1. Nome
+            • Nome do candidato 
+
+            2. formacao (lista de objetos)
             • grau        → "Tecnólogo", "Bacharel", "MBA", etc.
             • curso       → Nome do curso
             • instituicao → Onde cursou
             • conclusao   → "2018", "cursando", etc.
 
-            5. perfil_profissional (listagem de 2 parágrafos, nesta ordem)
+            3. Competencias (lista de competencias)
+                                Lista com as principais (no máximo 5)competências do candidato, como:
+                                - Competências(ex.: Power BI, Python, SQL).
+
+            4. perfil_profissional (listagem de 2 parágrafos, nesta ordem)
             • Parágrafo 1 – trajetória (empresas, cargos, período, volume de entregas).  
             • Parágrafo 2 – competências + projetos relevantes iniciados por verbo no infinitivo/gerúndio.
 
             ### EXEMPLO DE SAÍDA ESPERADA
+            "Nome": "João da Silva",
+            "formacao": [
+                {{
+                "grau": "Tecnólogo"}}]
             {{
             "formacao": [
                 {{
@@ -400,13 +421,16 @@ class cvFormatter():
                 "conclusao": "2019"
                 }}
             ],
+            "competencias": [
+                "Conhecimentos técnicos: Power BI, Python, SQL.",
+                "Soft skills: liderança, trabalho em equipe."
+            ],
             "perfil_profissional": [
                 "Camila atua desde fevereiro de 2021 na empresa Sankhya como Consultora de Implantação de ERP Sênior – módulo HCM, participando de 15 projetos de implantação e conduzindo treinamentos para clientes em vários estados. Antes disso, trabalhou na Solar Coca-Cola, YDUQS e Adtalem com foco em SAP HCM, somando experiência prévia de seis anos em rotinas de departamento pessoal.",
                 "Domina metodologias ágeis e Waterfall, conduz migrações de dados de sistemas legados, parametriza folha, ponto e avaliação de desempenho e implanta soluções de ERP. Implantou dois novos Centros de Distribuição e uma loja, integrou plataformas Totvs e Fortes e automatizou rotinas de importação de pedidos, entregando ganhos de produtividade em até 5 meses."
             ]
             }}
             """
-
         try:
             response = openai.chat.completions.create(
                 model="gpt-4o",

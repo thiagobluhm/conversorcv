@@ -52,7 +52,7 @@ def main():
 
             status_text.text("Etapa 2: Processando o texto do currículo...")
             progress_bar.progress(50)
-            json_data = cvformatador.process_text_curriculo(pdf_text)
+            json_data = cvformatador.process_text_parecer(pdf_text)
 
             # IMPRIMINDO NA TELA O TEXTO EXTRAIDO
             #st.write(json_data)
@@ -68,7 +68,7 @@ def main():
             status_text.text("Etapa 3: Convertendo texto para formato Word...")
             progress_bar.progress(80)
             with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as temp_docx:
-                cvformatador.create_docx_curriculo(temp_json_path, temp_docx.name)
+                cvformatador.create_docx_parecer(temp_json_path, temp_docx.name)
                 temp_docx_path = temp_docx.name
 
             status_text.text("Processo concluído")
@@ -78,7 +78,7 @@ def main():
                 st.download_button(
                     label="Baixar currículo em DOCX",
                     data=file.read(),
-                    file_name=f'Curriculo_{json_data['informacoes_pessoais']['nome']}.docx',
+                    file_name='parecer.docx',
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 )
 

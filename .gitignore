@@ -11,3 +11,6 @@ exports/
 # Ignore log files
 *.log
 teste.py
+*.pdf
+*.pptx
+*.docx
