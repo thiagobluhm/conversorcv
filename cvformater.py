@@ -302,7 +302,7 @@ class cvFormatter():
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                padding: 1rem 0;
+                padding: 1rem 2rem;
             }}
             .logo-container img {{
                 max-width: 200px;
