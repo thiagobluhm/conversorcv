@@ -12,5 +12,4 @@ exports/
 *.log
 teste.py
 *.pdf
-*.pptx
 *.docx
