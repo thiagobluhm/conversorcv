@@ -57,7 +57,7 @@ def main():
             # IMPRIMINDO NA TELA O TEXTO EXTRAIDO
             #st.write(json_data)
 
-            print(f'ESTE É O JSON_DATA{json_data}')
+            # print(f'ESTE É O JSON_DATA{json_data}')
 
             if not json_data:
                 st.error("Erro ao gerar JSON do currículo.")
@@ -66,7 +66,7 @@ def main():
             with tempfile.NamedTemporaryFile(delete=False, suffix=".json", mode='w', encoding='utf-8') as temp_json:
                 json.dump(json_data, temp_json, indent=2)
                 temp_json_path = temp_json.name
-            print(f'ESTE É O TEMP_JSON_PATH{temp_json_path}')
+            # print(f'ESTE É O TEMP_JSON_PATH{temp_json_path}')
 
             status_text.text("Etapa 3: Convertendo texto para formato Word...")
             progress_bar.progress(80)

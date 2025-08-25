@@ -31,6 +31,12 @@ def main():
         uploaded_file = st.file_uploader("Envie seu currículo em PDF", type="pdf")
 
         st.text_input(
+            "Responsável",
+            value=st.session_state.get('responsavel', ''),
+            key='responsavel',
+            placeholder="Nome do responsável pelo parecer"
+        )
+        st.text_input(
             "Disponibilidade",
             value=st.session_state.get('disponibilidade', ''),
             key='disponibilidade',
@@ -88,11 +94,11 @@ def main():
                 'disponibilidade': st.session_state.disponibilidade,
                 'modalidade': st.session_state.modalidade,
                 'dados_pessoais': st.session_state.dados_pessoais,
-                'perfil_comportamental': st.session_state.perfil_comportamental
+                'perfil_comportamental': st.session_state.perfil_comportamental,
+                'responsavel': st.session_state.responsavel
             })
 
-            # IMPRIMINDO NA TELA O TEXTO EXTRAIDO
-            print(f'ESTE É O JSON_DATA!!!!!!!{json_data}')
+            # print(f'ESTE É O JSON_DATA!!!!!!!{json_data}')
 
             if not json_data:
                 st.error("Erro ao gerar JSON do currículo.")
@@ -124,8 +130,7 @@ def main():
                 cvformatador.create_parecer_pptx(
                     arquivo_json=temp_json_path,
                     arquivo_saida=temp_pptx.name,
-                    responsavel="Carol",  # opcional
-                    # template_path="PARECER - Perfil Conforme e Estável.pptx",  # se quiser passar explicitamente
+                    responsavel=json_data['responsavel']
                 )
                 temp_pptx_path = temp_pptx.name
 

@@ -401,8 +401,9 @@ class cvFormatter():
         self,
         arquivo_json: str,
         arquivo_saida: str,
-        responsavel: str = "Responsável",
-        template_path: str | None = None
+        template_path: str | None = None,
+        responsavel: str | None = None,
+        
     ):
         """
         Preenche um PPTX a partir de um dicionário/JSON, preservando a formatação do template.
@@ -521,7 +522,7 @@ class cvFormatter():
                 out = new_out
             return out
 
-        # ---------- template ----------
+                # ---------- template ----------
         if template_path is None:
             template_path = str(Path(__file__).with_name("PARECER_MODELO2.pptx"))
         if not Path(template_path).exists():
@@ -530,26 +531,41 @@ class cvFormatter():
         # ---------- carrega JSON ----------
         with open(arquivo_json, "r", encoding="utf-8") as f:
             dados = json.load(f) or {}
-        d = { (k.lower() if isinstance(k, str) else k): v for k, v in dados.items() }
+        d = {(k.lower() if isinstance(k, str) else k): v for k, v in dados.items()}
 
         # ---------- formatadores (simples; template manda no estilo) ----------
-        def _as_str(v): return "" if v is None else str(v)
+        def _as_str(v): 
+            return "" if v is None else str(v)
+
         def _as_pipe(v):
             if isinstance(v, list):
                 return " | ".join(str(x) for x in v if str(x).strip())
             return _as_str(v)
+
         def _as_paragraphs(v):
             # lista -> um parágrafo por item (sem linha em branco extra)
             if isinstance(v, list):
                 return "\n".join(str(x) for x in v if str(x).strip())
             return _as_str(v)
+
         def _as_formacao(v):
             # linhas simples; o template decide bullets/estilo
             linhas = []
             for f in (v or []):
-                linhas.append(f"{f.get('grau','')} em {f.get('curso','')} — {f.get('instituicao','')} ({f.get('conclusao','')})")
+                linhas.append(
+                    f"{f.get('grau','')} em {f.get('curso','')} — "
+                    f"{f.get('instituicao','')} ({f.get('conclusao','')})"
+                )
             return "\n".join([ln for ln in linhas if ln.strip()])
 
+        # ---------- responsável + data (prioriza argumento da função) ----------
+        resp_arg  = (responsavel or "").strip()
+        resp_json = _as_str(d.get("responsavel")).strip()
+        resp_final = resp_arg or resp_json or "Responsável"
+
+        data_parecer_str = date.today().strftime("%d/%m/%Y")
+
+        # ---------- valores a preencher ----------
         values = {
             "nome": _as_str(d.get("nome")),
             "disponibilidade": _as_str(d.get("disponibilidade")),
@@ -559,9 +575,15 @@ class cvFormatter():
             "perfil_comportamental": _as_paragraphs(d.get("perfil_comportamental")),
             "competencias": _as_pipe(d.get("competencias")),
             "formacao": _as_formacao(d.get("formacao")),
-            "responsavel": _as_str(responsavel),
-            "data_parecer": date.today().strftime("%d/%m/%Y"),
+
+            # campos individuais
+            "responsavel": resp_final,
+            "data_parecer": data_parecer_str,
+
+            # linha combinada (use shape 'responsavel_data' ou placeholder correspondente)
+            "responsavel_data": f"Responsável: {resp_final}  Data do parecer: {data_parecer_str}",
         }
+
 
         # ---------- abre modelo ----------
         prs = Presentation(template_path)
