@@ -424,20 +424,6 @@ class cvFormatter():
         return arquivo_saida
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def process_text_curriculo(self, texto):
         """Processa o texto e retorna JSON estruturado."""
         load_dotenv()
@@ -704,6 +690,7 @@ class cvFormatter():
                 justify-content: center;
                 align-items: center;
                 padding: 1rem 2rem;
+                padding: 1vh 0; /* margem baseada na altura da tela */
             }}
             .logo-container img {{
                 max-height: 20vh; /* altura máxima baseada na tela */
