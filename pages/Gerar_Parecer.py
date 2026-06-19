@@ -55,15 +55,26 @@ def main():
             placeholder="Idade, estado civil, residência..."
         )
         st.text_area(
+            "Perfil Profissional",
+            key="perfil_profissional",
+            placeholder="Perfil profissional do candidato",
+            value=st.session_state.get("perfil_profissional", ""),
+            height=140,
+            max_chars=None,
+        )
+        st.text_area(
             "Perfil Comportamental",
             key="perfil_comportamental",
             placeholder="Perfil comportamental do candidato",
             value=st.session_state.get("perfil_comportamental", ""),
-            height=140,         # ajuste conforme preferir
-            max_chars=None,     # ou defina um limite se fizer sentido
+            height=140,
+            max_chars=None,
         )
-        
+
         submit_button = st.form_submit_button("Gerar Parecer")
+
+    if submit_button and not uploaded_file:
+        st.warning("Por favor, envie um currículo em PDF antes de gerar o parecer.")
 
     if submit_button and uploaded_file:
         progress_bar = st.progress(0)
@@ -94,6 +105,7 @@ def main():
                 'disponibilidade': st.session_state.disponibilidade,
                 'modalidade': st.session_state.modalidade,
                 'dados_pessoais': st.session_state.dados_pessoais,
+                'perfil_profissional': st.session_state.perfil_profissional,
                 'perfil_comportamental': st.session_state.perfil_comportamental,
                 'responsavel': st.session_state.responsavel
             })
