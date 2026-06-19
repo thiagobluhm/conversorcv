@@ -1,5 +1,6 @@
 import os
 import streamlit as st
+import streamlit.components.v1 as components
 import json
 import traceback
 import tempfile
@@ -21,7 +22,7 @@ os.chdir(os.path.abspath(os.curdir))
 
 def main():
     st.set_page_config(page_title="Conversor de CV PDF para DOCX **", page_icon="📄", layout="centered")
-    
+
     #add_bg_from_local("bg.png")
     cvformatador.add_logo_from_local("Logo2.png")
 
@@ -89,11 +90,26 @@ def main():
             if not st.session_state.get(key, '').strip()
         ]
 
+        alertas_html = ""
+
+        estilo_btn = "float:right;background:none;border:none;font-size:20px;cursor:pointer;line-height:1;color:inherit;opacity:0.5;margin-left:8px;"
+
         if not uploaded_file:
-            st.warning("Por favor, envie um currículo em PDF antes de gerar o parecer.")
+            alertas_html += f"""
+            <div class="alerta-item" style="background:#fff3cd;border-left:5px solid #f0a500;padding:14px 18px;border-radius:8px;margin:0 0 10px 0;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+                <button class="close-btn" style="{estilo_btn}">×</button>
+                <strong>⚠️ Currículo não anexado</strong><br>
+                Por favor, envie um currículo em PDF antes de gerar o parecer.
+            </div>"""
 
         if campos_vazios:
-            st.error(f"Campos obrigatórios não preenchidos, reveja: {', '.join(campos_vazios)}")
+            itens = "".join(f"<li>{c}</li>" for c in campos_vazios)
+            alertas_html += f"""
+            <div class="alerta-item" style="background:#fdecea;border-left:5px solid #e74c3c;padding:14px 18px;border-radius:8px;margin:0 0 10px 0;font-size:15px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+                <button class="close-btn" style="{estilo_btn}">×</button>
+                <strong>🚫 Campos obrigatórios não preenchidos — reveja:</strong>
+                <ul style="margin:6px 0 0 0;padding-left:20px;">{itens}</ul>
+            </div>"""
             st.markdown("""
             <style>
             div[data-testid="stForm"] input:placeholder-shown,
@@ -103,6 +119,36 @@ def main():
             }
             </style>
             """, unsafe_allow_html=True)
+
+        alertas_html_js = alertas_html.replace('`', '\\`').replace('${', '\\${')
+
+        if alertas_html:
+            inject_alerts = f"""
+            var el = parent.document.createElement('div');
+            el.id = 'st-alert-overlay';
+            el.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;width:340px;max-width:90vw;';
+            el.innerHTML = `{alertas_html_js}`;
+            parent.document.body.appendChild(el);
+            el.querySelectorAll('.close-btn').forEach(function(btn) {{
+                btn.addEventListener('click', function() {{
+                    var item = this.closest('.alerta-item');
+                    if (item) item.remove();
+                    if (el.querySelectorAll('.alerta-item').length === 0) el.remove();
+                }});
+            }});
+            """
+        else:
+            inject_alerts = ""
+
+        import time
+        components.html(f"""
+        <script>
+            // ts:{int(time.time() * 1000)}
+            var existing = parent.document.getElementById('st-alert-overlay');
+            if (existing) existing.remove();
+            {inject_alerts}
+        </script>
+        """, height=0)
 
     if submit_button and uploaded_file and not campos_vazios:
         progress_bar = st.progress(0)
