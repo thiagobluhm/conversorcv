@@ -73,10 +73,38 @@ def main():
 
         submit_button = st.form_submit_button("Gerar Parecer")
 
-    if submit_button and not uploaded_file:
-        st.warning("Por favor, envie um currículo em PDF antes de gerar o parecer.")
+    campos_vazios = []
 
-    if submit_button and uploaded_file:
+    if submit_button:
+        campos_obrigatorios = {
+            'responsavel': 'Responsável',
+            'disponibilidade': 'Disponibilidade',
+            'modalidade': 'Modalidade',
+            'dados_pessoais': 'Dados Pessoais',
+            'perfil_profissional': 'Perfil Profissional',
+            'perfil_comportamental': 'Perfil Comportamental',
+        }
+        campos_vazios = [
+            label for key, label in campos_obrigatorios.items()
+            if not st.session_state.get(key, '').strip()
+        ]
+
+        if not uploaded_file:
+            st.warning("Por favor, envie um currículo em PDF antes de gerar o parecer.")
+
+        if campos_vazios:
+            st.error(f"Campos obrigatórios não preenchidos, reveja: {', '.join(campos_vazios)}")
+            st.markdown("""
+            <style>
+            div[data-testid="stForm"] input:placeholder-shown,
+            div[data-testid="stForm"] textarea:placeholder-shown {
+                border: 2px solid #e74c3c !important;
+                border-radius: 6px !important;
+            }
+            </style>
+            """, unsafe_allow_html=True)
+
+    if submit_button and uploaded_file and not campos_vazios:
         progress_bar = st.progress(0)
         status_text = st.empty()
 
