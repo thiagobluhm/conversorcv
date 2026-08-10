@@ -552,7 +552,7 @@ class cvFormatter():
     def process_text_parecer(self, texto):
         """Processa o texto e retorna JSON estruturado."""
         load_dotenv()
-        chave_api = os.getenv('OEPNAI_API_KEY')
+        chave_api = os.getenv('OPENAI_API_KEY')
 
         if not chave_api:
             st.error("Chave da API OpenAI não encontrada.")
