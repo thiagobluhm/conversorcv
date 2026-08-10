@@ -8,7 +8,7 @@ langchain-experimental==0.3.2
 langchain-openai==0.2.2
 numexpr==2.10.1
 numpy==1.26.4
-openai==1.53.0
+openai==1.109.1
 pandas==2.2.2
 pathlib==1.0.1
 protobuf==5.28.2

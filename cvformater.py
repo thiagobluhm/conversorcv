@@ -1,7 +1,7 @@
 import json
 import traceback
 from dotenv import load_dotenv
-import openai
+from openai import OpenAI
 from PyPDF2 import PdfReader
 from docx import Document
 from docx.shared import Pt, Inches
@@ -428,11 +428,14 @@ class cvFormatter():
         """Processa o texto e retorna JSON estruturado."""
         load_dotenv()
         chave_api = os.getenv('OPENAI_API_KEY')
-        openai.api_key = chave_api
 
         if not chave_api:
             st.error("Chave da API OpenAI não encontrada.")
             return {}
+
+        endpoint = "https://fdrybluhm.services.ai.azure.com/openai/v1"
+        deployment_name = "gpt-5.6-luna"
+        client = OpenAI(base_url=endpoint, api_key=chave_api)
 
         modelo_prompt = f"""
                             TEXTO DO CURRÍCULO:
@@ -517,21 +520,25 @@ class cvFormatter():
                             """
 
         try:
-            response = openai.chat.completions.create(
-                model="gpt-4o",
-                messages=[
+            response = client.responses.create(
+                model=deployment_name,
+                input=[
                     {"role": "system", "content": """Você é um especialista em análise de currículos e extração de informações.
-                                                     Colete todas as informações possíveis, não deixe nada passar. 
+                                                     Colete todas as informações possíveis, não deixe nada passar.
                                                      Dê sua resposta APENAS com o json solicitado e nada mais. NÃO ESCREVA ```json na resposta!
                     """},
                     {"role": "user", "content": modelo_prompt}
                 ],
-                temperature=0.2,
-                max_tokens=4096
+                reasoning={"effort": "low"},
+                max_output_tokens=4096
             )
-            
-            conteudo = response.choices[0].message.content.replace("```json", "").strip()
+
+            conteudo = response.output_text.replace("```json", "").strip()
             # st.write(f"CONTEUDO: {conteudo}")
+
+            usage = getattr(response, "usage", None)
+            if usage:
+                print(f"[TOKENS] process_text_curriculo - entrada={usage.input_tokens} saida={usage.output_tokens} total={usage.total_tokens}")
 
             try:
                 return json.loads(conteudo)
@@ -545,12 +552,15 @@ class cvFormatter():
     def process_text_parecer(self, texto):
         """Processa o texto e retorna JSON estruturado."""
         load_dotenv()
-        chave_api = os.getenv('OPENAI_API_KEY')
-        openai.api_key = chave_api
+        chave_api = os.getenv('OEPNAI_API_KEY')
 
         if not chave_api:
             st.error("Chave da API OpenAI não encontrada.")
             return {}
+
+        endpoint = "https://fdrybluhm.services.ai.azure.com/openai/v1"
+        deployment_name = "gpt-5.6-luna"
+        client = OpenAI(base_url=endpoint, api_key=chave_api)
 
         modelo_prompt_parecer = f"""
             TEXTO DO CURRÍCULO ORIGINAL:
@@ -611,21 +621,25 @@ class cvFormatter():
             }}
             """
         try:
-            response = openai.chat.completions.create(
-                model="gpt-4o",
-                messages=[
+            response = client.responses.create(
+                model=deployment_name,
+                input=[
                     {"role": "system", "content": """Você é um especialista em análise de currículos e extração de informações.
-                                                     Colete todas as informações possíveis, não deixe nada passar. 
+                                                     Colete todas as informações possíveis, não deixe nada passar.
                                                      Dê sua resposta APENAS com o json solicitado e nada mais. NÃO ESCREVA ```json na resposta!
                     """},
                     {"role": "user", "content": modelo_prompt_parecer}
                 ],
-                temperature=0.2,
-                max_tokens=4096
+                reasoning={"effort": "low"},
+                max_output_tokens=4096
             )
-            
-            conteudo = response.choices[0].message.content.replace("```json", "").strip()
+
+            conteudo = response.output_text.replace("```json", "").strip()
             print(f"CONTEUDO: {conteudo}")
+
+            usage = getattr(response, "usage", None)
+            if usage:
+                print(f"[TOKENS] process_text_parecer - entrada={usage.input_tokens} saida={usage.output_tokens} total={usage.total_tokens}")
 
             try:
                 return json.loads(conteudo)
@@ -715,5 +729,3 @@ class cvFormatter():
             """,
             unsafe_allow_html=True
         )
-
-

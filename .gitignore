@@ -14,3 +14,4 @@ exports/
 teste.py
 *.pdf
 *.docx
+*.ipynb
