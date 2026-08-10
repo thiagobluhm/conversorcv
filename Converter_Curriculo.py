@@ -29,6 +29,20 @@ def main():
 
     with st.form(key="upload_form"):
         uploaded_file = st.file_uploader("Envie seu currículo em PDF", type="pdf")
+        st.text_area(
+            "Perfil Profissional",
+            key="perfil_profissional",
+            placeholder="Perfil profissional do candidato (opcional)",
+            value=st.session_state.get("perfil_profissional", ""),
+            height=140,
+        )
+        st.text_area(
+            "Perfil Comportamental",
+            key="perfil_comportamental",
+            placeholder="Perfil comportamental do candidato (opcional)",
+            value=st.session_state.get("perfil_comportamental", ""),
+            height=140,
+        )
         submit_button = st.form_submit_button("Converter Currículo")
 
     if submit_button and uploaded_file:
@@ -53,6 +67,10 @@ def main():
             status_text.text("Etapa 2: Processando o texto do currículo...")
             progress_bar.progress(50)
             json_data = cvformatador.process_text_curriculo(pdf_text)
+
+            if json_data:
+                json_data['perfil_profissional'] = st.session_state.get('perfil_profissional', '').strip() or "Não foram acrescentadas informações"
+                json_data['perfil_comportamental'] = st.session_state.get('perfil_comportamental', '').strip() or "Não foram acrescentadas informações"
 
             # IMPRIMINDO NA TELA O TEXTO EXTRAIDO
             #st.write(json_data)

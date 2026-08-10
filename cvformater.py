@@ -43,6 +43,8 @@ class cvFormatter():
             estrutura_padrao = {
                 "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
                 "resumo_qualificacoes": [],
+                "perfil_profissional": "Não foram acrescentadas informações",
+                "perfil_comportamental": "Não foram acrescentadas informações",
                 "experiencia_profissional": [],
                 "educacao": [],
                 "certificacoes": []
@@ -89,6 +91,18 @@ class cvFormatter():
             doc.add_heading('Resumo de Qualificações', level=2)
             for qualificacao in dados.get('resumo_qualificacoes', []):
                 doc.add_paragraph(f"- {qualificacao}")
+
+            adicionar_espaco()
+
+            # Perfil Profissional
+            doc.add_heading('Perfil Profissional', level=2)
+            doc.add_paragraph(dados.get('perfil_profissional') or "Não foram acrescentadas informações")
+
+            adicionar_espaco()
+
+            # Perfil Comportamental
+            doc.add_heading('Perfil Comportamental', level=2)
+            doc.add_paragraph(dados.get('perfil_comportamental') or "Não foram acrescentadas informações")
 
             adicionar_espaco()
 
