@@ -438,6 +438,52 @@ class cvFormatter():
         return arquivo_saida
 
 
+    def melhorar_texto(self, texto):
+        """Envia um texto para a IA melhorar gramática, clareza e coesão, mantendo as mesmas informações."""
+        load_dotenv()
+        chave_api = os.getenv('OPENAI_API_KEY')
+
+        if not chave_api:
+            st.error("Chave da API OpenAI não encontrada.")
+            return texto
+
+        endpoint = "https://fdrybluhm.services.ai.azure.com/openai/v1"
+        deployment_name = "gpt-5.6-luna"
+        client = OpenAI(base_url=endpoint, api_key=chave_api)
+
+        prompt_melhoria = f"""Melhore a gramática, clareza e coesão do texto abaixo, mantendo exatamente as mesmas informações e o
+                            mesmo sentido original. Não invente, não remova e não resuma conteúdo — apenas reescreva de forma mais
+                            bem escrita. Use linguagem formal, porém de fácil entendimento. As informações são referentes a candidatos
+                            a oportunidades de trabalho no Grupo Portfolio. Retorne APENAS o texto melhorado, sem aspas, sem comentários
+                            e sem explicações adicionais.
+
+TEXTO:
+{texto}
+"""
+
+        try:
+            response = client.responses.create(
+                model=deployment_name,
+                input=[
+                    {"role": "system", "content": "Você é um especialista em revisão de textos em português do Brasil, focado em gramática, clareza e coesão, e trabalha com processos seletivos do Grupo Portfolio."},
+                    {"role": "user", "content": prompt_melhoria}
+                ],
+                reasoning={"effort": "low"},
+                max_output_tokens=2048
+            )
+
+            texto_melhorado = response.output_text.strip()
+
+            usage = getattr(response, "usage", None)
+            if usage:
+                print(f"[TOKENS] melhorar_texto - entrada={usage.input_tokens} saida={usage.output_tokens} total={usage.total_tokens}")
+
+            return texto_melhorado or texto
+        except Exception as e:
+            print(f"Erro ao melhorar texto com a API OpenAI: {e}")
+            st.error("Não foi possível melhorar o texto agora. Tente novamente.")
+            return texto
+
     def process_text_curriculo(self, texto):
         """Processa o texto e retorna JSON estruturado."""
         load_dotenv()

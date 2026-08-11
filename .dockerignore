@@ -15,4 +15,6 @@ teste.py
 *.pdf
 *.docx
 *.ipynb
-*.json
+*.pdf
+*.pptx
+*.zip
