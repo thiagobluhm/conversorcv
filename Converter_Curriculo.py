@@ -1,4 +1,4 @@
-import os
+# import os
 import streamlit as st
 import json
 import traceback
@@ -13,6 +13,7 @@ from docx.shared import RGBColor
 from pathlib import Path
 import base64
 import re
+import streamlit.components.v1 as components
 from cvformater import *
 
 cvformatador = cvFormatter()
@@ -65,6 +66,7 @@ def main():
 
             st.session_state['cv_json_data'] = json_data
             st.session_state['cv_processado'] = True
+            st.session_state['perfil_profissional'] = (json_data.get('perfil_profissional') or '').strip()
 
             status_text.text("Processo concluído")
             progress_bar.progress(100)
@@ -78,28 +80,35 @@ def main():
 
         @st.fragment
         def campo_perfil_profissional():
-            # Aplica texto melhorado pendente ANTES de instanciar a caixa
-            # (o Streamlit não permite alterar o session_state de uma caixa
-            # depois que ela já foi desenhada na mesma execução).
-            if 'pending_perfil_profissional' in st.session_state:
-                st.session_state['perfil_profissional'] = st.session_state.pop('pending_perfil_profissional')
+            # Botão "Melhorar Texto" removido a pedido do Tiago: o Resumo
+            # Profissional já vem pré-preenchido pela IA (ver process_text_curriculo
+            # em cvformater.py), então não faz mais sentido oferecer essa melhoria
+            # manual aqui. Código mantido comentado para reativar caso volte a ser
+            # necessário.
+            #
+            # # Aplica texto melhorado pendente ANTES de instanciar a caixa
+            # # (o Streamlit não permite alterar o session_state de uma caixa
+            # # depois que ela já foi desenhada na mesma execução).
+            # if 'pending_perfil_profissional' in st.session_state:
+            #     st.session_state['perfil_profissional'] = st.session_state.pop('pending_perfil_profissional')
 
             st.text_area(
                 "Perfil Profissional",
                 key="perfil_profissional",
                 placeholder="Perfil profissional do candidato (opcional)",
-                height=140,
+                height=280,
             )
-            _, col_botao = st.columns([3, 1])
-            with col_botao:
-                if st.button("Melhorar Texto", key="melhorar_perfil_profissional", use_container_width=True):
-                    texto_atual = st.session_state.get('perfil_profissional', '').strip()
-                    if texto_atual:
-                        with st.spinner("Melhorando texto..."):
-                            st.session_state['pending_perfil_profissional'] = cvformatador.melhorar_texto(texto_atual)
-                        st.rerun(scope="fragment")
-                    else:
-                        st.warning("Escreva algo no campo antes de melhorar o texto.")
+
+            # _, col_botao = st.columns([3, 1])
+            # with col_botao:
+            #     if st.button("Melhorar Texto", key="melhorar_perfil_profissional", use_container_width=True):
+            #         texto_atual = st.session_state.get('perfil_profissional', '').strip()
+            #         if texto_atual:
+            #             with st.spinner("Melhorando texto..."):
+            #                 st.session_state['pending_perfil_profissional'] = cvformatador.melhorar_texto(texto_atual)
+            #             st.rerun(scope="fragment")
+            #         else:
+            #             st.warning("Escreva algo no campo antes de melhorar o texto.")
 
         @st.fragment
         def campo_perfil_comportamental():
@@ -123,6 +132,17 @@ def main():
                     else:
                         st.warning("Escreva algo no campo antes de melhorar o texto.")
 
+        st.text_input(
+            "Vaga",
+            key="vaga",
+            placeholder="Ex.: Analista de RH, Desenvolvedor Backend",
+        )
+        st.text_input(
+            "Modalidade",
+            key="modalidade",
+            placeholder="Ex.: Presencial, Remoto, Híbrido",
+        )
+
         campo_perfil_profissional()
         campo_perfil_comportamental()
 
@@ -133,6 +153,8 @@ def main():
                 json_data = st.session_state['cv_json_data']
                 json_data['perfil_profissional'] = st.session_state.get('perfil_profissional', '').strip() or "Não foram acrescentadas informações"
                 json_data['perfil_comportamental'] = st.session_state.get('perfil_comportamental', '').strip() or "Não foram acrescentadas informações"
+                json_data['vaga'] = st.session_state.get('vaga', '').strip() or "Não informado"
+                json_data['modalidade'] = st.session_state.get('modalidade', '').strip() or "Não informado"
 
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".json", mode='w', encoding='utf-8') as temp_json:
                     json.dump(json_data, temp_json, indent=2)
@@ -142,14 +164,40 @@ def main():
                     cvformatador.create_docx_curriculo(temp_json_path, temp_docx.name)
                     temp_docx_path = temp_docx.name
 
-                st.success("Conversão concluída com sucesso! Baixe seu currículo abaixo.")
+                st.success("Currículo gerado!")
+
+                # Download automático a pedido do Tiago: ao clicar em "Gerar
+                # Currículo" o docx já é baixado direto, sem precisar de um
+                # segundo clique num botão "Baixar currículo em DOCX". Embutimos
+                # o arquivo como base64 num link invisível e disparamos o clique
+                # via JavaScript.
                 with open(temp_docx_path, "rb") as file:
-                    st.download_button(
-                        label="Baixar currículo em DOCX",
-                        data=file.read(),
-                        file_name=f"Curriculo_{json_data['informacoes_pessoais']['nome']}.docx",
-                        mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    )
+                    docx_bytes = file.read()
+                docx_base64 = base64.b64encode(docx_bytes).decode()
+                nome_arquivo_docx = f"Curriculo_{json_data['informacoes_pessoais']['nome']}.docx"
+                download_automatico_html = f"""
+                    <html>
+                    <body>
+                    <a id="auto_download_link"
+                       href="data:application/vnd.openxmlformats-officedocument.wordprocessingml.document;base64,{docx_base64}"
+                       download="{nome_arquivo_docx}"></a>
+                    <script>
+                        document.getElementById('auto_download_link').click();
+                    </script>
+                    </body>
+                    </html>
+                """
+                components.html(download_automatico_html, height=0, width=0)
+
+                # Botão de download antigo, comentado — reative se preferir
+                # voltar a exigir um clique extra em vez do download automático.
+                # with open(temp_docx_path, "rb") as file:
+                #     st.download_button(
+                #         label="Baixar currículo em DOCX",
+                #         data=file.read(),
+                #         file_name=f"Curriculo_{json_data['informacoes_pessoais']['nome']}.docx",
+                #         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                #     )
 
             except Exception as e:
                 st.error(f"Ocorreu um erro: {e}")
@@ -157,3 +205,29 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

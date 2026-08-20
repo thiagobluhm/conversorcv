@@ -3,13 +3,10 @@
 __pycache__
 apprh/
 
-# Ignore cache directory
 cache/
-
-# Ignore exports directory
 exports/
+Curriculos_teste/
 
-# Ignore log files
 *.log
 teste.py
 *.pdf

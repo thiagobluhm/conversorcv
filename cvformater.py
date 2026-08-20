@@ -41,10 +41,12 @@ class cvFormatter():
                 dados = json.load(f)
 
             estrutura_padrao = {
-                "informacoes_pessoais": {"nome": "", "cidade": "", "email": "", "telefone": "", "cargo": ""},
+                "informacoes_pessoais": {"nome": "", "cidade": ""},
                 "resumo_qualificacoes": [],
-                "perfil_profissional": "Não foram acrescentadas informações",
-                "perfil_comportamental": "Não foram acrescentadas informações",
+                "perfil_profissional": "Sem informações",
+                "perfil_comportamental": "Sem informações",
+                "vaga": "Sem informações",
+                "modalidade": "Sem informações",
                 "experiencia_profissional": [],
                 "educacao": [],
                 "certificacoes": []
@@ -73,7 +75,7 @@ class cvFormatter():
 
             # Informações pessoais
             informacoes_pessoais = dados.get('informacoes_pessoais', {})
-            nome = informacoes_pessoais.get('nome', 'Nome Não Encontrado')
+            nome = informacoes_pessoais.get('nome') or 'Sem informações'
             paragrafo_nome = doc.add_paragraph(nome)
             if paragrafo_nome.runs:
                 nome_run = paragrafo_nome.runs[0]
@@ -82,71 +84,98 @@ class cvFormatter():
             paragrafo_nome.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
 
             adicionar_espaco()
-            contato = f"Cidade: {informacoes_pessoais.get('cidade', 'N/A')}\nEmail: {informacoes_pessoais.get('email', 'N/A')}\nTelefone: {informacoes_pessoais.get('telefone', 'N/A')}\nPosição: {informacoes_pessoais.get('cargo', 'N/A')}"
+            contato = f"Cidade: {informacoes_pessoais.get('cidade') or 'Sem informações'}\nVaga: {dados.get('vaga') or 'Sem informações'}\nModalidade: {dados.get('modalidade') or 'Sem informações'}"
             doc.add_paragraph(contato)
-
-            adicionar_espaco()
-
-            # Resumo de qualificações
-            doc.add_heading('Resumo de Qualificações', level=2)
-            for qualificacao in dados.get('resumo_qualificacoes', []):
-                doc.add_paragraph(f"- {qualificacao}")
-
-            adicionar_espaco()
-
-            # Perfil Profissional
-            doc.add_heading('Perfil Profissional', level=2)
-            doc.add_paragraph(dados.get('perfil_profissional') or "Não foram acrescentadas informações")
-
-            adicionar_espaco()
-
-            # Perfil Comportamental
-            doc.add_heading('Perfil Comportamental', level=2)
-            doc.add_paragraph(dados.get('perfil_comportamental') or "Não foram acrescentadas informações")
-
-            adicionar_espaco()
-
-            # Experiência profissional
-            doc.add_heading('Experiência Profissional', level=2)
-            for experiencia in dados.get('experiencia_profissional', []):
-                empresa = experiencia.get('empresa', 'Empresa Não Informada')
-                cargo = experiencia.get('cargo', 'Cargo Não Informado')
-                periodo = experiencia.get('periodo', 'Período Não Informado')
-                local = experiencia.get('local', 'Local Não Informado')
-                atividades = experiencia.get('atividades_exercidas', [])
-
-                doc.add_paragraph(f"{empresa} ({local})", style='Heading 3')
-                doc.add_paragraph(f"{cargo} - {periodo}", style='Normal')
-                
-                if atividades:
-                    doc.add_paragraph("Atividades exercidas:", style='Normal')
-                    for atividade in atividades:
-                        doc.add_paragraph(f"{atividade}", style='List Bullet')
-
-                ferramentas = experiencia.get('ferramentas', [])
-                if ferramentas:
-                    doc.add_paragraph("Ferramentas utilizadas:", style='Normal')
-                    for ferramenta in ferramentas:
-                        doc.add_paragraph(f"{ferramenta}", style='List Bullet')
 
             adicionar_espaco()
 
             # Educação
             doc.add_heading('Educação', level=2)
-            for educacao in dados.get('educacao', []):
-                instituicao = educacao.get('instituicao', 'Instituição Não Informada')
-                curso = educacao.get('curso', 'Curso Não Informado')
-                periodo = educacao.get('periodo', 'Período Não Informado')
+            lista_educacao = dados.get('educacao') or []
+            if lista_educacao:
+                for educacao in lista_educacao:
+                    instituicao = educacao.get('instituicao') or 'Sem informações'
+                    curso = educacao.get('curso') or 'Sem informações'
+                    periodo = educacao.get('periodo') or 'Sem informações'
 
-                doc.add_paragraph(f"{instituicao}", style='Heading 3')
-                doc.add_paragraph(f"{curso} - {periodo}", style='Normal')
+                    doc.add_paragraph(f"{instituicao}", style='Heading 3')
+                    doc.add_paragraph(f"{curso} - {periodo}", style='Normal')
+            else:
+                doc.add_paragraph("Sem informações", style='Normal')
 
             adicionar_espaco()
 
             # Certificações
             doc.add_heading('Certificações', level=2)
-            for certificacao in dados.get('certificacoes', []):
-                doc.add_paragraph(f"- {certificacao}", style='Normal')
+            lista_certificacoes = dados.get('certificacoes') or []
+            if lista_certificacoes:
+                for certificacao in lista_certificacoes:
+                    doc.add_paragraph(f"- {certificacao}", style='Normal')
+            else:
+                doc.add_paragraph("Sem informações", style='Normal')
+
+            adicionar_espaco()
+
+            # ===== INÍCIO: seção Resumo de Qualificações =====
+            # Removida (ainda em validação) a pedido do Tiago: as qualificações
+            # técnicas agora devem aparecer embutidas no texto do Resumo
+            # Profissional, em vez de numa seção própria. Código mantido
+            # comentado para reativar facilmente se precisarmos voltar atrás.
+            #
+            # # Resumo de qualificações
+            # doc.add_heading('Resumo de Qualificações', level=2)
+            # lista_qualificacoes = dados.get('resumo_qualificacoes') or []
+            # if lista_qualificacoes:
+            #     for qualificacao in lista_qualificacoes:
+            #         doc.add_paragraph(f"- {qualificacao}")
+            # else:
+            #     doc.add_paragraph("Sem informações", style='Normal')
+            #
+            # adicionar_espaco()
+            # ===== FIM: seção Resumo de Qualificações =====
+
+            # Perfil Profissional (título exibido como "Resumo Profissional")
+            doc.add_heading('Resumo Profissional', level=2)
+            doc.add_paragraph(dados.get('perfil_profissional') or "Sem informações")
+
+            adicionar_espaco()
+
+            # Perfil Comportamental
+            doc.add_heading('Perfil Comportamental', level=2)
+            doc.add_paragraph(dados.get('perfil_comportamental') or "Sem informações")
+
+            adicionar_espaco()
+
+            # Experiência profissional
+            doc.add_heading('Experiência Profissional', level=2)
+            lista_experiencias = dados.get('experiencia_profissional') or []
+            if lista_experiencias:
+                for experiencia in lista_experiencias:
+                    empresa = experiencia.get('empresa') or 'Sem informações'
+                    cargo = experiencia.get('cargo') or 'Sem informações'
+                    periodo = experiencia.get('periodo') or 'Sem informações'
+                    local = experiencia.get('local') or 'Sem informações'
+                    atividades = experiencia.get('atividades_exercidas') or []
+
+                    doc.add_paragraph(f"{empresa} ({local})", style='Heading 3')
+                    doc.add_paragraph(f"{cargo} - {periodo}", style='Normal')
+
+                    doc.add_paragraph("Atividades exercidas:", style='Normal')
+                    if atividades:
+                        for atividade in atividades:
+                            doc.add_paragraph(f"{atividade}", style='List Bullet')
+                    else:
+                        doc.add_paragraph("Sem informações", style='List Bullet')
+
+                    ferramentas = experiencia.get('ferramentas') or []
+                    doc.add_paragraph("Ferramentas utilizadas:", style='Normal')
+                    if ferramentas:
+                        for ferramenta in ferramentas:
+                            doc.add_paragraph(f"{ferramenta}", style='List Bullet')
+                    else:
+                        doc.add_paragraph("Sem informações", style='List Bullet')
+            else:
+                doc.add_paragraph("Sem informações", style='Normal')
 
             # Salvar o documento Word
             doc.save(arquivo_saida)
@@ -506,9 +535,6 @@ TEXTO:
                                 Contém as informações pessoais do candidato, incluindo:
                                 - "nome": Nome completo do candidato.
                                 - "cidade": Cidade e estado de residência.
-                                - "email": Endereço de e-mail de contato.
-                                - "telefone": Número de telefone para contato.
-                                - "cargo": Cargo atual ou pretendido.
 
                             2. **resumo_qualificacoes**:
                                 Lista com as principais habilidades, competências ou realizações do candidato, como:
@@ -536,14 +562,70 @@ TEXTO:
                                 - Nome da certificação (ex.: "Microsoft Certified: Data Analyst Associate").
                                 - Instituição que emitiu a certificação (ex.: Microsoft, AWS, etc.).
 
+                            6. **perfil_profissional**:
+                                Resumo profissional em texto corrido (sem divisão por tópicos), 1 único parágrafo com
+                                aproximadamente 8 linhas, focando nas experiências profissionais, ordenado da mais
+                                recente para a mais antiga. Evite redundâncias ao máximo, foque em não ser repetitivo.
+                                Evite datas neste trecho. Sem adjetivações, sem verbos no imperativo, sem exorbitância
+                                ou engrandecimento — seja factual e objetivo, mas venda bem o(a) candidato(a). Inclua
+                                projetos, cases, resultados e entregas em destaque, incluindo o resultado gerado nas
+                                empresas quando essa informação existir no currículo. Não crie nem invente números que
+                                não estejam no texto original. Não inclua informações de formação acadêmica ou
+                                certificações — elas já aparecem em outra seção do currículo. Estruture o parágrafo
+                                assim: (1) visão geral da trajetória/anos de experiência e área de atuação; (2) cargo
+                                e atuação mais recente, com contexto e responsabilidades; (3) passagens anteriores
+                                relevantes, com projetos e ferramentas quando houver; (4) uma frase final conectando o
+                                perfil do candidato ao tipo de vaga ou área em que ele mais se encaixa, com base na
+                                própria trajetória — use um fechamento no estilo "apresenta forte aderência à vaga
+                                por..." ou "seu perfil apresenta boa aderência para posições de...".
+
+                                Exemplos de tom e estrutura esperados (use como referência de estilo — não copie o
+                                conteúdo, cada currículo tem sua própria história):
+
+                                Exemplo A: "Profissional com mais de 15 anos de experiência em tecnologia, com
+                                trajetória que evoluiu de desenvolvimento de sistemas para gestão de projetos e
+                                produtos digitais. Atuou recentemente como Project Manager e Product Manager na
+                                Onnitech, liderando projetos de banco digital, aplicativos, integrações e canais de
+                                atendimento, incluindo WhatsApp. Possui sólida experiência em gestão de escopo,
+                                cronograma, riscos, indicadores e alinhamento entre áreas de negócio, tecnologia, UX e
+                                parceiros. Na M. Dias Branco, gerenciou até seis projetos simultaneamente, além de
+                                atuar com qualidade de software, análise de negócios e homologações. Também acumula
+                                experiência em levantamento e documentação de requisitos pela Capgemini. Apresenta
+                                forte aderência à vaga pela vivência em projetos digitais, gestão de stakeholders e
+                                aplicação de metodologias ágeis e preditivas."
+
+                                Exemplo B: "Alessa Carvalho possui experiência em gestão de projetos, transformação
+                                digital e modernização de processos, com atuação em órgãos públicos de grande porte.
+                                Atualmente é Gerente de Projetos no Ministério Público do Estado do Ceará, liderando
+                                iniciativas de transformação digital, automação de processos e acompanhamento de
+                                indicadores estratégicos. Anteriormente atuou como Gerente de Projetos de Produtos
+                                Digitais na SEPLAG, conduzindo projetos de automação, produtos digitais e soluções
+                                voltadas ao cidadão, incluindo Ceará App, Ceará Digital e Acesso Cidadão. Possui
+                                experiência em metodologias ágeis, gestão de equipes multidisciplinares, stakeholders,
+                                indicadores, riscos, contratos e recursos de projetos. Também atuou como Analista de
+                                Sistemas e Analista de Processos e Projetos, com foco em governança, implantação de
+                                sistemas e melhoria de processos. Seu perfil apresenta boa aderência para posições de
+                                Gerente de Projetos de TI, especialmente em ambientes de transformação digital e
+                                gestão estratégica."
+
+                                Exemplo C: "Profissional com mais de 10 anos de experiência em Análise de Negócios,
+                                atuando na interface entre áreas de negócio e tecnologia nos segmentos de Telecom,
+                                Saúde e Agro. Possui sólida experiência em levantamento e documentação de requisitos,
+                                gestão e priorização de backlog, elaboração de User Stories e acompanhamento de
+                                projetos em ambientes ágeis. Atuou como Analista de Negócios e Product Owner,
+                                conduzindo projetos de ponta a ponta, desde a descoberta das necessidades até a
+                                homologação e entrega das soluções. Destaca-se pela participação em iniciativas de
+                                transformação digital, projetos centrados no usuário e desenvolvimento de aplicações
+                                corporativas, incluindo soluções para a área da saúde. Apresenta forte aderência à
+                                vaga por sua experiência em relacionamento com stakeholders, mapeamento de demandas,
+                                validação de requisitos e apoio à implementação de soluções tecnológicas alinhadas
+                                aos objetivos do negócio."
+
                             Formato esperado do JSON de saída:
                             {{
                                 "informacoes_pessoais": {{
                                     "nome": "",
                                     "cidade": "",
-                                    "email": "",
-                                    "telefone": "",
-                                    "cargo": ""
                                 }},
                                 "resumo_qualificacoes": [
                                     "Resumo 1",
@@ -575,7 +657,8 @@ TEXTO:
                                 "certificacoes": [
                                     "Certificação 1",
                                     "Certificação 2"
-                                ]
+                                ],
+                                "perfil_profissional": "Texto corrido do resumo profissional, em um único parágrafo."
                             }}
                             """
 
