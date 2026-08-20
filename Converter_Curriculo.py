@@ -13,6 +13,7 @@ from docx.shared import RGBColor
 from pathlib import Path
 import base64
 import re
+import time
 import streamlit.components.v1 as components
 from cvformater import *
 
@@ -36,6 +37,11 @@ def main():
         progress_bar = st.progress(0)
         status_text = st.empty()
 
+        # Logs de acompanhamento interno (só aparecem no terminal/console,
+        # nunca na tela do usuário) — controle do processamento de currículos.
+        inicio_processamento = time.time()
+        cvformatador.log_etapa(f"Processar Currículo - iniciado (arquivo: {uploaded_file.name}, {uploaded_file.size} bytes)")
+
         try:
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as temp_pdf:
                 temp_pdf.write(uploaded_file.getvalue())
@@ -46,6 +52,7 @@ def main():
             pdf_text = cvformatador.extract_text_from_pdf(temp_pdf_path)
 
             if not pdf_text.strip():
+                cvformatador.log_etapa(f"Processar Currículo - ERRO ({time.time() - inicio_processamento:.2f}s): não foi possível extrair texto do PDF")
                 st.error("Não foi possível extrair texto do PDF.")
                 return
 
@@ -61,6 +68,7 @@ def main():
             # print(f'ESTE É O JSON_DATA{json_data}')
 
             if not json_data:
+                cvformatador.log_etapa(f"Processar Currículo - ERRO ({time.time() - inicio_processamento:.2f}s): JSON do currículo não foi gerado")
                 st.error("Erro ao gerar JSON do currículo.")
                 return
 
@@ -72,7 +80,11 @@ def main():
             progress_bar.progress(100)
             st.success("Currículo processado! Preencha as informações abaixo (opcional) e clique em Gerar Currículo.")
 
+            duracao_processamento = time.time() - inicio_processamento
+            cvformatador.log_etapa(f"Processar Currículo - sucesso ({duracao_processamento:.2f}s total)")
+
         except Exception as e:
+            cvformatador.log_etapa(f"Processar Currículo - ERRO ({time.time() - inicio_processamento:.2f}s): {e}")
             st.error(f"Ocorreu um erro: {e}")
             st.error(traceback.format_exc())
 
@@ -149,6 +161,8 @@ def main():
         gerar_button = st.button("Gerar Currículo")
 
         if gerar_button:
+            inicio_geracao = time.time()
+            cvformatador.log_etapa("Gerar Currículo - iniciado")
             try:
                 json_data = st.session_state['cv_json_data']
                 json_data['perfil_profissional'] = st.session_state.get('perfil_profissional', '').strip() or "Não foram acrescentadas informações"
@@ -199,7 +213,10 @@ def main():
                 #         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 #     )
 
+                cvformatador.log_etapa(f"Gerar Currículo - sucesso ({time.time() - inicio_geracao:.2f}s)")
+
             except Exception as e:
+                cvformatador.log_etapa(f"Gerar Currículo - ERRO ({time.time() - inicio_geracao:.2f}s): {e}")
                 st.error(f"Ocorreu um erro: {e}")
                 st.error(traceback.format_exc())
 

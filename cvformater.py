@@ -1,5 +1,6 @@
 import json
 import traceback
+import time
 from dotenv import load_dotenv
 from openai import OpenAI
 from PyPDF2 import PdfReader
@@ -10,7 +11,7 @@ from docx.shared import RGBColor as docxRGBColor
 from pathlib import Path
 import base64
 import re
-import os 
+import os
 import streamlit as st
 os.chdir(os.path.abspath(os.curdir))
 from docx.shared import Inches, Cm
@@ -26,7 +27,16 @@ import json, re, unicodedata
 class cvFormatter():
     def __init__(self):
         pass
-    
+
+    def log_etapa(self, mensagem):
+        """Imprime uma linha de log de acompanhamento no terminal/console.
+
+        Uso interno apenas (controle de processamento) — não aparece em nenhum
+        momento na tela para o usuário do app.
+        """
+        agora = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        print(f"[LOG {agora}] {mensagem}")
+
     def validate_json(self, dados, estrutura_padrao):
         """Valida e completa o JSON com estrutura padrão."""
         for chave in estrutura_padrao:
@@ -36,6 +46,8 @@ class cvFormatter():
 
     def create_docx_curriculo(self, arquivo_json, arquivo_saida='curriculo.docx', logo_path='Logo2.png'):
         """Cria um documento Word formatado a partir de dados de um currículo em JSON e adiciona um logo."""
+        inicio = time.time()
+        self.log_etapa(f"Geração do DOCX - iniciada ({arquivo_saida})")
         try:
             with open(arquivo_json, 'r', encoding='utf-8') as f:
                 dados = json.load(f)
@@ -110,7 +122,7 @@ class cvFormatter():
             lista_certificacoes = dados.get('certificacoes') or []
             if lista_certificacoes:
                 for certificacao in lista_certificacoes:
-                    doc.add_paragraph(f"- {certificacao}", style='Normal')
+                    doc.add_paragraph(f"{certificacao}", style='List Bullet')
             else:
                 doc.add_paragraph("Sem informações", style='Normal')
 
@@ -136,13 +148,15 @@ class cvFormatter():
 
             # Perfil Profissional (título exibido como "Resumo Profissional")
             doc.add_heading('Resumo Profissional', level=2)
-            doc.add_paragraph(dados.get('perfil_profissional') or "Sem informações")
+            paragrafo_resumo_profissional = doc.add_paragraph(dados.get('perfil_profissional') or "Sem informações")
+            paragrafo_resumo_profissional.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
             adicionar_espaco()
 
             # Perfil Comportamental
             doc.add_heading('Perfil Comportamental', level=2)
-            doc.add_paragraph(dados.get('perfil_comportamental') or "Sem informações")
+            paragrafo_perfil_comportamental = doc.add_paragraph(dados.get('perfil_comportamental') or "Sem informações")
+            paragrafo_perfil_comportamental.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
 
             adicionar_espaco()
 
@@ -179,9 +193,13 @@ class cvFormatter():
 
             # Salvar o documento Word
             doc.save(arquivo_saida)
+            duracao = time.time() - inicio
+            self.log_etapa(f"Geração do DOCX - sucesso ({arquivo_saida}, {duracao:.2f}s)")
             print(f"Currículo salvo em {arquivo_saida}")
 
         except Exception as e:
+            duracao = time.time() - inicio
+            self.log_etapa(f"Geração do DOCX - ERRO ({duracao:.2f}s): {e}")
             print(f"Erro ao criar documento Word: {e}")
             print(traceback.format_exc())
 
@@ -515,10 +533,14 @@ TEXTO:
 
     def process_text_curriculo(self, texto):
         """Processa o texto e retorna JSON estruturado."""
+        inicio = time.time()
+        self.log_etapa("Processamento do currículo (chamada à IA) - iniciado")
+
         load_dotenv()
         chave_api = os.getenv('OPENAI_API_KEY')
 
         if not chave_api:
+            self.log_etapa(f"Processamento do currículo - ERRO ({time.time() - inicio:.2f}s): chave da API OpenAI não encontrada")
             st.error("Chave da API OpenAI não encontrada.")
             return {}
 
@@ -684,11 +706,19 @@ TEXTO:
                 print(f"[TOKENS] process_text_curriculo - entrada={usage.input_tokens} saida={usage.output_tokens} total={usage.total_tokens}")
 
             try:
-                return json.loads(conteudo)
+                resultado = json.loads(conteudo)
+                duracao = time.time() - inicio
+                nome_candidato = (resultado.get('informacoes_pessoais') or {}).get('nome', 'Sem informações')
+                self.log_etapa(f"Processamento do currículo - sucesso (candidato: {nome_candidato}, {duracao:.2f}s)")
+                return resultado
             except json.JSONDecodeError:
+                duracao = time.time() - inicio
+                self.log_etapa(f"Processamento do currículo - ERRO ({duracao:.2f}s): resposta da IA não é um JSON válido")
                 print("Erro ao converter resposta da API para JSON.")
                 return {}
         except Exception as e:
+            duracao = time.time() - inicio
+            self.log_etapa(f"Processamento do currículo - ERRO ({duracao:.2f}s): {e}")
             print(f"Erro ao processar texto com a API OpenAI: {e}")
             return {}
 
@@ -797,11 +827,18 @@ TEXTO:
 
     def extract_text_from_pdf(self, caminho_pdf):
         """Extrai o texto de um arquivo PDF."""
+        inicio = time.time()
+        self.log_etapa(f"Extração de texto do PDF - iniciada ({caminho_pdf})")
         try:
             leitor = PdfReader(caminho_pdf)
             texto = "".join(pagina.extract_text() for pagina in leitor.pages)
-            return self.clear_text(texto)
+            texto = self.clear_text(texto)
+            duracao = time.time() - inicio
+            self.log_etapa(f"Extração de texto do PDF - sucesso ({len(texto)} caracteres, {duracao:.2f}s)")
+            return texto
         except Exception as e:
+            duracao = time.time() - inicio
+            self.log_etapa(f"Extração de texto do PDF - ERRO ({duracao:.2f}s): {e}")
             print(f"Erro ao extrair texto do PDF: {e}")
             return ""
 
